@@ -8,10 +8,12 @@ import { RUTA_CLASICA } from '../utils/rutas'
 // Escena E1: nombre, rol y accesos directos sobre el plano aéreo (HU-03)
 export function Intro() {
   const fase = useExperiencia((s) => s.fase)
+  const faseTrasPanel = useExperiencia((s) => s.faseTrasPanel)
   const comenzar = useExperiencia((s) => s.comenzar)
   const abrirPanel = useExperiencia((s) => s.abrirPanel)
   const principal = useRef(null)
-  const visible = fase === 'intro'
+  // Sigue montada bajo el diario: al cerrarlo, el foco vuelve al botón que lo abrió
+  const visible = fase === 'intro' || (fase === 'panel' && faseTrasPanel === 'intro')
 
   useEffect(() => {
     if (visible) principal.current?.focus()
