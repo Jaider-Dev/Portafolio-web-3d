@@ -1,0 +1,148 @@
+/* El canvas ocupa toda la ventana y la página no hace scroll ni zoom propios (HU-01) */
+html:has(.experiencia), body:has(.experiencia) {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.experiencia {
+  position: fixed;
+  inset: 0;
+  background: var(--fondo);
+}
+
+.experiencia canvas { touch-action: none; }
+
+.intro {
+  position: absolute;
+  left: 50%;
+  bottom: 8vh;
+  z-index: 10;
+  width: min(640px, calc(100% - 2rem));
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  transform: translateX(-50%);
+}
+
+.intro p { margin: 0 0 1rem; }
+.intro .acciones { justify-content: center; }
+.intro-nombre { margin: 0; font-size: clamp(1.75rem, 5vw, 2.75rem); line-height: 1.15; }
+.intro .intro-rol { margin-bottom: 0.75rem; font-size: 1.125rem; color: var(--texto-suave); }
+
+/* La interfaz solo ocupa los bordes: el centro sigue recibiendo los gestos de la cámara */
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.hud-arriba, .hud-abajo {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hud-arriba { justify-content: space-between; align-items: flex-start; }
+.hud .boton { pointer-events: auto; }
+.hud-autor { max-width: 70vw; }
+.solo-estrecho { display: none; }
+
+.capa-dialogo {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.capa-menu { z-index: 25; justify-content: center; align-items: center; background: rgb(0 0 0 / 0.35); }
+
+.panel, .menu-viaje {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  animation: aparecer var(--velocidad) ease-out;
+}
+
+.panel { width: min(440px, 100%); }
+.panel h2, .menu-viaje h2 { margin: 0; font-size: 1.375rem; line-height: 1.25; }
+.panel-contenido { flex: 1; }
+.panel-contenido p { margin: 0 0 1rem; }
+.panel-contenido ul { margin: 0; padding-left: 1.25rem; }
+.panel-contenido .acciones { margin-bottom: 1rem; }
+.panel-contenido .panel-estado { min-height: 1.5em; color: var(--texto-suave); }
+
+.menu-viaje { width: min(480px, calc(100% - 2rem)); max-height: calc(100% - 2rem); border-radius: 10px; }
+.menu-lista { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.menu-destino { width: 100%; justify-content: flex-start; text-align: left; }
+.menu-destino[aria-current] { border-width: 2px; border-color: var(--texto); }
+
+/* Glifos: de momento su código; el dibujo llega con las runas (05 §12) */
+.glifo {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--borde);
+  border-radius: 50%;
+}
+
+.notificaciones {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 15;
+  max-width: min(360px, calc(100% - 2rem));
+  pointer-events: none;
+}
+
+.notificacion {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  animation: aparecer var(--velocidad) ease-out;
+}
+
+/* Panel de rendimiento (solo en desarrollo): al centro para no tapar el HUD */
+.stats-dev { top: 0 !important; left: 50% !important; }
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+[data-reducir] .panel, [data-reducir] .menu-viaje, [data-reducir] .notificacion { animation: none; }
+
+/* Móvil en vertical: barra inferior al alcance del pulgar y paneles como hoja a pantalla completa */
+@media (max-width: 640px) {
+  .solo-ancho { display: none; }
+  .solo-estrecho { display: inline; }
+  .hud { padding: 0.5rem; }
+  .hud-arriba { display: contents; }
+  .hud-autor { align-self: flex-start; max-width: 100%; }
+  .hud-abajo { gap: 0.5rem; }
+  .hud-abajo .boton { flex: 1; }
+  .hud-clasico { position: absolute; right: 0.5rem; bottom: 0.5rem; width: calc((100% - 2rem) / 3); }
+  .hud-abajo { padding-right: calc((100% - 2rem) / 3 + 0.5rem); }
+  .panel { width: 100%; }
+  .capa-dialogo:not(.capa-menu) { align-items: flex-end; }
+  .panel { height: 100%; border: 0; }
+  .notificaciones { right: 0.5rem; bottom: 4rem; }
+  .intro { bottom: 1rem; padding: 1rem; }
+  .intro .acciones { flex-direction: column; }
+}
