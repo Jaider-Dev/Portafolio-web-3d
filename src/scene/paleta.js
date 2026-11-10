@@ -9,6 +9,7 @@ export const PALETA = {
   sendero: '#e3ba75', // tierra del camino
   madera: '#926440', // puente, troncos, letrero, poste
   agua: '#6eb7ca', // río y cascadas
+  espuma: '#afd7de', // vetas de la corriente, orillas y bruma (el agua clara de la referencia)
   lona: '#e38531', // tienda
   fuego: '#f4af36', // brasas y luz de la fogata
   cueva: '#3b382f', // roca en penumbra (la roca oscurecida)
