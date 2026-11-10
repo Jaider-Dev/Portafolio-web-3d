@@ -17,17 +17,15 @@ const LLAMAS = [
   { posicion: [-0.14, 0.36, -0.1], escala: [0.18, 0.55, 0.18], color: PALETA.fuego, fase: 3.1 },
 ]
 
-const BRASAS = 26
-const ALTURA_BRASAS = 3.2
 const PUFFS = 12
 const ALTURA_HUMO = 10
 
 // Cada brasa con su propio inicio, velocidad y giro; semilla fija: el fuego es igual en cada visita
-const SEMILLAS_BRASAS = (() => {
-  let s = 31
+function crearSemillas(cantidad, semilla, abertura) {
+  let s = semilla
   const azar = () => ((s = (s * 16807) % 2147483647) / 2147483647)
-  return Array.from({ length: BRASAS }, () => ({ inicio: azar(), velocidad: 0.5 + azar() * 0.6, giro: azar() * Math.PI * 2, radio: 0.1 + azar() * 0.35 }))
-})()
+  return Array.from({ length: cantidad }, () => ({ inicio: azar(), velocidad: 0.5 + azar() * 0.6, giro: azar() * Math.PI * 2, radio: abertura * (0.3 + azar()) }))
+}
 const COLOR_BRASA = new THREE.Color(PALETA.fuego)
 
 function Llama({ posicion, escala, color, fase }) {
@@ -48,33 +46,34 @@ function Llama({ posicion, escala, color, fase }) {
   )
 }
 
-// Brasas: puntos que suben en bucle desde la fogata y se apagan con la altura. Con mezcla aditiva un
-// punto negro no suma nada: oscurecer su color de vértice equivale a desvanecerlo
-function Brasas() {
+// Brasas: puntos que suben en bucle desde un fuego y se apagan con la altura. Con mezcla aditiva un
+// punto negro no suma nada: oscurecer su color de vértice equivale a desvanecerlo. Las usan la fogata
+// y las antorchas de la cueva (con menos brasas, más bajas y más juntas)
+export function Brasas({ cantidad = 26, altura = 3.2, abertura = 0.35, base = 0.4, tamano = 0.09, semilla = 31 }) {
   const puntos = useRef()
-  const geometria = useMemo(() => {
+  const { geometria, semillas } = useMemo(() => {
     const nueva = new THREE.BufferGeometry()
-    nueva.setAttribute('position', new THREE.BufferAttribute(new Float32Array(BRASAS * 3), 3))
-    nueva.setAttribute('color', new THREE.BufferAttribute(new Float32Array(BRASAS * 3), 3))
-    return nueva
-  }, [])
+    nueva.setAttribute('position', new THREE.BufferAttribute(new Float32Array(cantidad * 3), 3))
+    nueva.setAttribute('color', new THREE.BufferAttribute(new Float32Array(cantidad * 3), 3))
+    return { geometria: nueva, semillas: crearSemillas(cantidad, semilla, abertura) }
+  }, [cantidad, semilla, abertura])
 
   // Calidad: se dibujan solo las primeras N brasas (drawRange), sin rehacer la geometría
   const { perfil } = useCalidad()
   useEffect(() => {
-    puntos.current.geometry.setDrawRange(0, cuantos(BRASAS, perfil.particulas))
-  }, [perfil.particulas])
+    puntos.current.geometry.setDrawRange(0, cuantos(cantidad, perfil.particulas))
+  }, [perfil.particulas, cantidad])
 
   // Las posiciones se escriben a través del ref, como cualquier objeto de three que se anima
   useFrame(({ clock }) => {
     const reducir = useExperiencia.getState().ajustes.reducirMovimiento
     const s = reducir ? 0 : clock.elapsedTime
     const { position: posiciones, color: colores } = puntos.current.geometry.attributes
-    SEMILLAS_BRASAS.forEach(({ inicio, velocidad, giro, radio }, i) => {
-      const avance = (inicio + (s * velocidad) / ALTURA_BRASAS) % 1 // 0 en la fogata, 1 arriba
+    semillas.forEach(({ inicio, velocidad, giro, radio }, i) => {
+      const avance = (inicio + (s * velocidad) / altura) % 1 // 0 en la fogata, 1 arriba
       const angulo = giro + s * 0.8
       const abierto = radio * (1 + avance)
-      posiciones.setXYZ(i, Math.cos(angulo) * abierto, 0.4 + avance * ALTURA_BRASAS, Math.sin(angulo) * abierto)
+      posiciones.setXYZ(i, Math.cos(angulo) * abierto, base + avance * altura, Math.sin(angulo) * abierto)
       const brillo = (1 - avance) ** 1.5
       colores.setXYZ(i, COLOR_BRASA.r * brillo, COLOR_BRASA.g * brillo, COLOR_BRASA.b * brillo)
     })
@@ -84,7 +83,7 @@ function Brasas() {
 
   return (
     <points ref={puntos} geometry={geometria}>
-      <pointsMaterial vertexColors size={0.09} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
+      <pointsMaterial vertexColors size={tamano} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
     </points>
   )
 }

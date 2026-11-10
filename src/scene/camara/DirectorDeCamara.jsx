@@ -10,9 +10,11 @@ const MIN_DISTANCIA = 3
 const MAX_DISTANCIA = 60
 const MAX_POLAR = Math.PI * 0.48
 const LIMITES = new THREE.Box3(new THREE.Vector3(-30, 0, -33), new THREE.Vector3(30, 18, 26))
-// Galería de la cueva (lugares/Cueva.jsx): el objetivo no sale de ella y la cámara queda a ≤ 4 m
-const LIMITES_CUEVA = new THREE.Box3(new THREE.Vector3(1, 1, -27), new THREE.Vector3(7, 2.5, -22))
-const DISTANCIA_CUEVA = 4
+// Galería de la cueva (lugares/galeria.js, elipse de 7 × 5,6 m y 4,6 m de alto): el objetivo queda cerca
+// del centro y la cámara a ≤ 3 m de él, así nunca sale de la cúpula (con 4 m llegaba a atravesar el fondo)
+const LIMITES_CUEVA = new THREE.Box3(new THREE.Vector3(2.5, 1.2, -25.5), new THREE.Vector3(5.5, 2.2, -23))
+const DISTANCIA_CUEVA = 3
+const MIN_POLAR_CUEVA = 1.1 // la cámara no sube más de ~1,4 m sobre el objetivo: no atraviesa el techo
 
 const DURACION = { vuelo: 3.5, viajando: 1.5 } // segundos (HU-03 y HU-08)
 const FOV_INTRO = 38
@@ -81,6 +83,7 @@ export function DirectorDeCamara() {
     c.minDistance = enCueva ? 1 : explorando ? MIN_DISTANCIA : 0
     c.maxDistance = enCueva ? DISTANCIA_CUEVA : explorando ? distanciaMaxima(aspecto) : Infinity
     c.maxPolarAngle = explorando ? MAX_POLAR : Math.PI
+    c.minPolarAngle = enCueva ? MIN_POLAR_CUEVA : 0
     c.setBoundary(enCueva ? LIMITES_CUEVA : explorando ? LIMITES : null)
   }, [fase, menuViaje, aspecto, zona])
 
