@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { LUGARES_POR_ID } from '../data/lugares.js'
+import { nivelInferior, nivelInicial } from '../utils/calidad.js'
 
 const CLAVE = 'isla'
 
@@ -46,6 +47,9 @@ export const useExperiencia = create((set, get) => ({
   notificacion: null,
   descubiertos: guardado.descubiertos ?? [],
   ajustes: { sonido: false, calidad: 'auto', reducirMovimiento: prefiereReducirMovimiento(), ...guardado.ajustes },
+  // Nivel que decide el monitor de rendimiento cuando la calidad es "auto" (HU-17). No se guarda:
+  // cada visita vuelve a empezar según el dispositivo
+  calidadAuto: nivelInicial(),
 
   setFase: (fase) => {
     if (puedePasar(get().fase, fase)) set({ fase })
@@ -90,6 +94,13 @@ export const useExperiencia = create((set, get) => ({
     if (fase === 'explorando' || fase === 'panel' || fase === 'viajando') set({ menuViaje: abierto })
   },
   notificar: (notificacion) => set({ notificacion }),
+  // El monitor detectó FPS bajos de forma sostenida: un escalón menos, solo en automática
+  bajarCalidadAuto: () => {
+    const { ajustes, calidadAuto } = get()
+    const siguiente = nivelInferior(calidadAuto)
+    if (ajustes.calidad !== 'auto' || siguiente === calidadAuto) return
+    set({ calidadAuto: siguiente, notificacion: { tipo: 'calidad', nivel: siguiente } })
+  },
   cambiarAjuste: (clave, valor) => {
     set((s) => ({ ajustes: { ...s.ajustes, [clave]: valor } }))
     get().guardar()

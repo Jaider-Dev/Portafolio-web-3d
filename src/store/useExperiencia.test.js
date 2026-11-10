@@ -145,3 +145,21 @@ test('reiniciar vuelve a la carga y conserva lo descubierto', () => {
   assert.equal(estado().panel, null)
   assert.deepEqual(estado().descubiertos, ['cima'])
 })
+
+test('calidad automática: el monitor baja un escalón cada vez y avisa (HU-17)', () => {
+  useExperiencia.setState({ calidadAuto: 'alta', ajustes: { ...inicial.ajustes, calidad: 'auto' } })
+  estado().bajarCalidadAuto()
+  assert.equal(estado().calidadAuto, 'media')
+  assert.deepEqual(estado().notificacion, { tipo: 'calidad', nivel: 'media' })
+  estado().bajarCalidadAuto()
+  estado().bajarCalidadAuto()
+  assert.equal(estado().calidadAuto, 'baja')
+})
+
+test('calidad elegida a mano: el monitor no la cambia y la elección se guarda', () => {
+  estado().cambiarAjuste('calidad', 'media')
+  useExperiencia.setState({ calidadAuto: 'alta' })
+  estado().bajarCalidadAuto()
+  assert.equal(estado().calidadAuto, 'alta')
+  assert.equal(JSON.parse(memoria.get('isla')).ajustes.calidad, 'media')
+})

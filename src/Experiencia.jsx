@@ -6,7 +6,9 @@ import { LUGARES_POR_ID } from './data/lugares.js'
 import { PERFIL } from './data/perfil'
 import { TEXTOS } from './data/textos'
 import { DirectorDeCamara } from './scene/camara/DirectorDeCamara'
+import { Calidad } from './scene/Calidad'
 import { Mundo } from './scene/Mundo'
+import { useCalidad } from './scene/useCalidad'
 import { useExperiencia } from './store/useExperiencia'
 import { HUD } from './ui/HUD'
 import { Intro } from './ui/Intro'
@@ -80,13 +82,14 @@ export default function Experiencia() {
   const setFase = useExperiencia((s) => s.setFase)
   const reducirMovimiento = useExperiencia((s) => s.ajustes.reducirMovimiento)
   const { progress } = useProgress()
+  const { perfil } = useCalidad()
 
   return (
     <main className="experiencia" data-reducir={reducirMovimiento || undefined}>
       <LimiteDeError alFallar={() => setFase('fallback')}>
         <Canvas
           shadows="percentage"
-          dpr={[1, 2]}
+          dpr={perfil.dpr} // según la calidad (HU-17): el Canvas lo vuelve a aplicar si cambia
           camera={{ fov: 38, near: 0.5, far: 600, position: [40, 46, 85] }}
           onCreated={({ gl }) => {
             gl.domElement.setAttribute('role', 'img')
@@ -96,6 +99,7 @@ export default function Experiencia() {
           <Suspense fallback={null}>
             {FalloSimulado && simulaErrorDeCarga() && <FalloSimulado />}
             <Mundo />
+            <Calidad />
             <CargaLista />
           </Suspense>
           <DirectorDeCamara />

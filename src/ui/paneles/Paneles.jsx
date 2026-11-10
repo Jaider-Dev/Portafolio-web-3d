@@ -4,6 +4,7 @@ import { ENLACES } from '../../data/enlaces'
 import { PERFIL } from '../../data/perfil'
 import { TEXTOS } from '../../data/textos'
 import { useExperiencia } from '../../store/useExperiencia'
+import { OPCIONES } from '../../utils/calidad.js'
 import { esMarcador } from '../../utils/marcadores'
 import { rutaClasicaDe } from '../../utils/rutas'
 import { Panel } from '../Panel'
@@ -80,7 +81,35 @@ function Contacto() {
   )
 }
 
-const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto }
+// Ajustes (HU-17): de momento, la calidad gráfica. Un grupo de radios nativos: se recorre con las
+// flechas, el lector anuncia "1 de 4" y la opción marcada, sin ARIA extra
+function Ajustes() {
+  const A = TEXTOS.ajustes
+  const calidad = useExperiencia((s) => s.ajustes.calidad)
+  const calidadAuto = useExperiencia((s) => s.calidadAuto)
+  const cambiarAjuste = useExperiencia((s) => s.cambiarAjuste)
+  return (
+    <Panel lugar={A.lugar} seccion={A.seccion}>
+      <fieldset className="opciones">
+        <legend>{A.calidad}</legend>
+        {OPCIONES.map((opcion) => (
+          <label key={opcion} className="opcion">
+            <input type="radio" name="calidad" value={opcion} checked={calidad === opcion} onChange={() => cambiarAjuste('calidad', opcion)} />
+            <span>
+              <strong>{A.opciones[opcion].titulo}</strong>
+              <span className="opcion-detalle">
+                {A.opciones[opcion].detalle}
+                {opcion === 'auto' && calidad === 'auto' && ` · ${A.ahora(A.opciones[calidadAuto].titulo.toLowerCase())}`}
+              </span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+    </Panel>
+  )
+}
+
+const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes }
 
 export function Paneles() {
   const panel = useExperiencia((s) => s.panel)

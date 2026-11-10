@@ -32,6 +32,19 @@ export const TEXTOS = {
     abrirSobreMi: (nombre, rol) => `${nombre}, ${rol}. Abrir Sobre mí`,
     region: 'Accesos de la isla',
   },
+  ajustes: {
+    abrir: 'Ajustes',
+    lugar: 'Mochila',
+    seccion: 'Ajustes',
+    calidad: 'Calidad gráfica',
+    opciones: {
+      auto: { titulo: 'Automática', detalle: 'Se ajusta sola si la isla va lenta' },
+      alta: { titulo: 'Alta', detalle: 'Sombras finas y todos los detalles' },
+      media: { titulo: 'Media', detalle: 'Sombras más simples y menos partículas' },
+      baja: { titulo: 'Baja', detalle: 'Sin sombras: para equipos modestos y móviles' },
+    },
+    ahora: (nivel) => `Ahora mismo: ${nivel}`,
+  },
   hora: {
     nombre: 'Modo noche', // con aria-pressed: "Modo noche, activado / desactivado"
     pista: { manana: 'Cambiar a la noche', noche: 'Cambiar a la mañana' },
@@ -73,6 +86,7 @@ export const TEXTOS = {
   notificacion: {
     descubriste: (nombre, seccion) => `Descubriste: ${nombre} · ${seccion}`,
     enlacePendiente: (destino) => `${destino}: enlace pendiente`,
+    calidad: (nivel) => `Calidad ajustada a ${nivel} para que la isla vaya fluida`,
   },
   canvas: (nombre) => `Isla 3D interactiva del portafolio de ${nombre}. Usa el menú de viaje para acceder a cada sección.`,
   clasico: {

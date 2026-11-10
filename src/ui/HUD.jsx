@@ -42,6 +42,14 @@ export function HUD() {
           <strong>{PERFIL.nombre}</strong> · {PERFIL.rol}
         </button>
         <div className="hud-derecha">
+          <button type="button" className="boton boton-icono hud-ajustes" aria-label={TEXTOS.ajustes.abrir} title={TEXTOS.ajustes.abrir} onClick={() => abrirPanel({ tipo: 'ajustes' })}>
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+              <circle cx="16" cy="6" r="2" />
+              <circle cx="10" cy="12" r="2" />
+              <circle cx="18" cy="18" r="2" />
+            </svg>
+          </button>
           <BotonHora className="hud-hora" />
           <Link className="boton hud-clasico" to={rutaClasicaDe(pathname, panel)} aria-label={TEXTOS.hud.clasicoAccesible}>
             <span className="solo-ancho">{TEXTOS.hud.clasico}</span>

@@ -1,9 +1,11 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Instance, Instances } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useExperiencia } from '../../store/useExperiencia'
+import { cuantos } from '../../utils/calidad.js'
 import { PALETA } from '../paleta'
+import { useCalidad } from '../useCalidad'
 
 // Fogata viva (HU-14): llamas que respiran, brasas que suben y una columna de humo que se ve desde el
 // sendero y la cima (hito de orientación, 02 §7). La luz que la acompaña está en Ambiente (una sola
@@ -56,6 +58,12 @@ function Brasas() {
     nueva.setAttribute('color', new THREE.BufferAttribute(new Float32Array(BRASAS * 3), 3))
     return nueva
   }, [])
+
+  // Calidad: se dibujan solo las primeras N brasas (drawRange), sin rehacer la geometría
+  const { perfil } = useCalidad()
+  useEffect(() => {
+    puntos.current.geometry.setDrawRange(0, cuantos(BRASAS, perfil.particulas))
+  }, [perfil.particulas])
 
   // Las posiciones se escriben a través del ref, como cualquier objeto de three que se anima
   useFrame(({ clock }) => {
