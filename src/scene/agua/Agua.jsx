@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { ARROYO, CAUCE, MUNDO } from '../../data/mundo.js'
-import { GRISES } from '../grises'
+import { PALETA } from '../paleta'
 
-const material = <meshStandardMaterial color={GRISES.agua} roughness={0.25} transparent opacity={0.85} side={THREE.DoubleSide} depthWrite={false} />
+const material = <meshStandardMaterial color={PALETA.agua} roughness={0.25} transparent opacity={0.85} side={THREE.DoubleSide} depthWrite={false} />
 
 // Cinta que sigue una curva; la coordenada V avanza con el agua (06 §9), lista para animarla en el sprint 2
 function crearCinta(puntos, ancho, segmentos = 80) {

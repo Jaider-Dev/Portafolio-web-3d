@@ -50,6 +50,9 @@ html:has(.experiencia), body:has(.experiencia) {
 }
 
 .hud-arriba { justify-content: space-between; align-items: flex-start; }
+.hud-derecha { display: flex; gap: 0.5rem; }
+.boton-hora { min-width: 44px; padding: 0.5rem; }
+.esquina-hora { position: absolute; top: 1rem; right: 1rem; z-index: 12; }
 .hud .boton { pointer-events: auto; }
 .hud-autor { max-width: 70vw; }
 .solo-estrecho { display: none; }
@@ -134,7 +137,10 @@ html:has(.experiencia), body:has(.experiencia) {
   .solo-estrecho { display: inline; }
   .hud { padding: 0.5rem; }
   .hud-arriba { display: contents; }
-  .hud-autor { align-self: flex-start; max-width: 100%; }
+  /* Bloque de texto normal (no flex): si no cabe en una línea, el rol pasa a la siguiente */
+  .hud-autor { display: block; text-align: left; align-self: flex-start; max-width: calc(100% - 52px); }
+  .hud-derecha { display: contents; }
+  .hud-hora, .esquina-hora { position: absolute; top: 0.5rem; right: 0.5rem; }
   .hud-abajo { gap: 0.5rem; }
   .hud-abajo .boton { flex: 1; }
   .hud-clasico { position: absolute; right: 0.5rem; bottom: 0.5rem; width: calc((100% - 2rem) / 3); }

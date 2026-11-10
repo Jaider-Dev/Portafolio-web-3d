@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { TEXTOS } from '../data/textos'
 import { RUTA_CLASICA } from '../utils/rutas'
 import { hayWebGL } from '../utils/webgl'
+import { BotonHora } from '../ui/BotonHora'
 
 const T = TEXTOS.clasico
 
@@ -15,12 +16,15 @@ export function MenuClasico() {
           ))}
         </ul>
       </nav>
-      {hayWebGL() ? (
-        <div className="selector" role="group" aria-label={T.selector}>
-          <span aria-current="page" aria-label={T.version2d}>2D</span>
-          <Link to="/" aria-label={T.version3d}>3D</Link>
-        </div>
-      ) : <p className="selector-aviso">{T.sinWebgl}</p>}
+      <div className="clasico-herramientas">
+        <BotonHora />
+        {hayWebGL() ? (
+          <div className="selector" role="group" aria-label={T.selector}>
+            <span aria-current="page" aria-label={T.version2d}>2D</span>
+            <Link to="/" aria-label={T.version3d}>3D</Link>
+          </div>
+        ) : <p className="selector-aviso">{T.sinWebgl}</p>}
+      </div>
     </header>
   )
 }

@@ -1,5 +1,5 @@
 import { Instance, Instances } from '@react-three/drei'
-import { GRISES } from '../grises'
+import { PALETA } from '../paleta'
 import { alturaDelTerreno } from './terreno.js'
 
 // Bosque de 02 · Mapa §1: rodea la colina y el campamento, sin tapar caminos ni puntos de interés
@@ -18,7 +18,7 @@ export function Vegetacion() {
     <group name="vegetacion">
       <Instances limit={ARBOLES.length + 1}>
         <coneGeometry args={[1.3, 7, 7]} />
-        <meshStandardMaterial color={GRISES.vegetacion} flatShading roughness={1} />
+        <meshStandardMaterial color={PALETA.vegetacion} flatShading roughness={1} />
         {ARBOLES.map(([x, z], i) => {
           const escala = 0.8 + ((i * 37) % 10) / 20
           return <Instance key={`${x},${z}`} position={[x, alturaDelTerreno(x, z) + 3.5 * escala, z]} scale={escala} />

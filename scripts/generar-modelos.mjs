@@ -1,6 +1,6 @@
 // Primeros modelos GLB del proyecto (HU-04): tienda, fogata, puente y menhir, construidos por código.
 // Medidas de 02 · Mapa §2 y §5. 1 unidad = 1 m, +Y arriba, origen en la base de la pieza.
-// Grises provisionales: los colores se deciden en PL-05. Se sustituirán por los de Blender en el sprint 2.
+// Materiales en gris y con nombre: al cargarlos, src/scene/lugares/Lugares.jsx les pone el color de la paleta (PL-05).
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'

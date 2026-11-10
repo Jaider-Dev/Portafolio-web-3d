@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
-import { GRISES } from '../grises'
+import { PALETA } from '../paleta'
 import { alturaDelTerreno, CONTORNO, puntoDelContorno } from './terreno.js'
 
 const SECTORES = 200
@@ -83,10 +83,10 @@ export function Isla() {
   return (
     <group name="isla">
       <mesh geometry={superficie}>
-        <meshStandardMaterial color={GRISES.meseta} flatShading roughness={1} />
+        <meshStandardMaterial color={PALETA.meseta} flatShading roughness={1} />
       </mesh>
       <mesh geometry={masa}>
-        <meshStandardMaterial color={GRISES.roca} flatShading roughness={1} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>
     </group>
   )

@@ -32,6 +32,10 @@ export const TEXTOS = {
     abrirSobreMi: (nombre, rol) => `${nombre}, ${rol}. Abrir Sobre mí`,
     region: 'Accesos de la isla',
   },
+  hora: {
+    nombre: 'Modo noche', // con aria-pressed: "Modo noche, activado / desactivado"
+    pista: { manana: 'Cambiar a la noche', noche: 'Cambiar a la mañana' },
+  },
   menu: {
     titulo: 'Viajar a…',
     cerrar: 'Cerrar',
