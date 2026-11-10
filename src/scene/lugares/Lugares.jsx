@@ -3,7 +3,7 @@ import { Clone, Instance, Instances, useGLTF } from '@react-three/drei'
 import { LUGARES } from '../../data/lugares.js'
 import { MUNDO } from '../../data/mundo.js'
 import { PALETA } from '../paleta'
-import { alturaDelTerreno, SENDERO_DENSO } from '../isla/terreno.js'
+import { alturaDelTerreno, ESTANQUE, SENDERO_DENSO } from '../isla/terreno.js'
 import { FuegoVivo } from './Fogata'
 
 const RUTAS = {
@@ -83,22 +83,6 @@ export function Menhires() {
   )
 }
 
-// Rocas que integran la cascada alta en la montaña (02 Z4): en el labio, a los dos lados de la caída y
-// al pie, donde la cortina entra en la poza. Dejan libre la repisa (x 0–4, z -17) y la puerta de la cueva
-const ROCAS_CASCADA = [
-  // labio: el arroyo sale entre dos rocas
-  roca([2.5, 12.4, -17.3], 1.0), roca([5.6, 12.5, -17.35], 1.1), roca([2.9, 11.3, -17.05], 0.7), roca([5.2, 11.2, -17.1], 0.75),
-  // costados de la caída, como una pared escalonada
-  roca([1.9, 9.2, -17.35], 0.9, 0.8), roca([6.1, 8.8, -17.4], 0.95, 0.8), roca([1.7, 6.6, -17.4], 0.8, 0.9),
-  roca([6.3, 6.2, -17.45], 0.85, 0.9), roca([1.8, 4.3, -17.4], 0.7), roca([6.2, 4, -17.45], 0.75),
-  // pie: rocas en la orilla de la poza, a la derecha y en el extremo izquierdo
-  roca([6.4, 0.1, -15.8], 0.9, 0.7), roca([7.1, 0.05, -14.4], 0.6, 0.7), roca([5.9, 0.3, -16.9], 0.7, 0.8),
-  roca([-0.7, 0.1, -16.5], 0.7, 0.75), roca([-1.2, 0.05, -15.3], 0.5, 0.7),
-]
-
-export function RocasCascada() {
-  return <Rocas nombre="rocas-cascada" piedras={ROCAS_CASCADA} />
-}
 
 export function Campamento() {
   const [xFogata, , zFogata] = MUNDO.fogata
@@ -218,11 +202,17 @@ export function Cima() {
     roca([mx, my + 0.05, mz], 1.6, 0.22), roca([mx + 1.1, my + 0.15, mz - 0.6], 0.9, 0.3),
     roca([mx - 1.2, my + 0.1, mz + 0.5], 0.8, 0.28), roca([mx + 0.3, my + 0.12, mz + 1.2], 0.7, 0.25),
   ]
-  const [fx, fy, fz] = MUNDO.manantial
+  // El manantial: rocas detrás del estanque (del lado contrario al arroyo); el agua brota a sus pies
+  const [ex, , ez] = ESTANQUE.centro
+  const detras = (distancia, lado, radio, aplastada) => {
+    const x = ex + 0.55 * distancia + 0.83 * lado
+    const z = ez - 0.83 * distancia + 0.55 * lado
+    return roca([x, alturaDelTerreno(x, z) + radio * 0.35, z], radio, aplastada)
+  }
   return (
     <group name="cima">
       <Rocas nombre="mirador" piedras={losas} color={PALETA.piedra} />
-      <Rocas nombre="manantial" piedras={[roca([fx, fy + 0.3, fz], 0.9, 0.8), roca([fx + 0.9, fy + 0.1, fz + 0.4], 0.5, 0.7), roca([fx - 0.8, fy + 0.1, fz - 0.3], 0.45, 0.7)]} />
+      <Rocas nombre="manantial" piedras={[detras(1.9, 0, 0.9, 0.8), detras(1.6, 1.1, 0.55, 0.7), detras(1.6, -1.1, 0.5, 0.7)]} />
     </group>
   )
 }

@@ -18,7 +18,7 @@ export const LUGARES = [
   },
   {
     id: 'sendero', nombre: 'Sendero de los mojones', seccion: 'Trayectoria', glifo: 'G4',
-    menhir: [10, 7, -6], llegada: [9, 7, -5],
+    menhir: [12.4, 6.3, -5.4], llegada: [9, 7, -5], // a la derecha del camino al subir (no en medio)
     camara: { posicion: [16, 11, 2], objetivo: [9, 7, -7] },
   },
   {

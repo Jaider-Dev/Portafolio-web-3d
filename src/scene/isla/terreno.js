@@ -59,21 +59,35 @@ const distanciaAlCauce = (x, z) => {
   return distancia
 }
 
-const anchoDelRio = (z) => (z > 15 ? 2.25 : z > 4 ? 1.75 : 2)
+// Medio ancho del cauce (02 · Mapa §5: 4 m aguas arriba, 3,5 m en el vado, 4,5 m cerca del borde). Los
+// cambios son graduales: el agua (agua/Agua.jsx) usa la misma función y su orilla acompaña al cauce
+export const medioAnchoDelRio = (z) => 2 - 0.25 * suave(2.5, 5.5, z) + 0.5 * suave(13.5, 16.5, z)
+// El agua llega 0,4 m más allá del borde del cauce: su orilla queda bajo la tierra, ni flota ni se hunde
+export const MARGEN_ORILLA = 0.4
+
+// Estanque del manantial, en la cima: de él nace el arroyo
+export const ESTANQUE = { centro: [ARROYO[0][0], ARROYO[0][1], ARROYO[0][2]], radio: 1.3 }
+const HONDO = 0.3 // profundidad del agua sobre el lecho del arroyo y del estanque
 
 export function alturaDelTerreno(x, z) {
   let altura = alturaColina(x, z)
 
-  // arroyo de la cima: baja del manantial al borde de la cascada alta
+  // arroyo de la cima: baja del estanque del manantial al borde de la cascada alta. El lecho va 0,3 m
+  // por debajo del agua y las paredes suben entre 0,6 y 1,6 m del eje: el agua (1 m de medio ancho)
+  // queda encajada, con su orilla bajo la tierra
   const [manantial, labio] = ARROYO
   const distanciaArroyo = distanciaASegmento(x, z, [manantial[0], manantial[2]], [labio[0], labio[2]])
-  if (distanciaArroyo < 2.5 && z < -17.6) {
+  if (distanciaArroyo < 1.6 && z < -17.6) {
     const avance = limitar((z - manantial[2]) / (labio[2] - manantial[2]))
-    altura = mezclar(mezclar(manantial[1], labio[1], avance), altura, suave(1, 2.5, distanciaArroyo))
+    altura = mezclar(mezclar(manantial[1], labio[1], avance) - HONDO, altura, suave(0.6, 1.6, distanciaArroyo))
+  }
+  const aEstanque = Math.hypot(x - ESTANQUE.centro[0], z - ESTANQUE.centro[2])
+  if (aEstanque < ESTANQUE.radio + 0.8) {
+    altura = mezclar(ESTANQUE.centro[1] - HONDO, altura, suave(ESTANQUE.radio - 0.4, ESTANQUE.radio + 0.8, aEstanque))
   }
 
   // lecho del río: 0,4 m bajo la superficie, que está a -0,3 m
-  const mitad = anchoDelRio(z)
+  const mitad = medioAnchoDelRio(z)
   const cauce = suave(mitad + 0.6, mitad - 0.4, distanciaAlCauce(x, z))
   altura = mezclar(altura, -0.7, cauce * (altura < 1 ? 1 : 0))
 
