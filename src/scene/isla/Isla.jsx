@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { PALETA } from '../paleta'
-import { alturaDelTerreno, CONTORNO, puntoDelContorno } from './terreno.js'
+import { alturaDelTerreno, CONTORNO, distanciaAlSendero, puntoDelContorno, SENDERO_DENSO } from './terreno.js'
 
 const SECTORES = 200
 const ANILLOS = 48
@@ -67,14 +67,25 @@ function abrirRanuraDeLaCueva(geometria) {
 // y sus tres vértices propios, así que el color también queda facetado
 const HIERBA = new THREE.Color(PALETA.meseta)
 const ROCA = new THREE.Color(PALETA.roca)
+const TIERRA = new THREE.Color(PALETA.sendero)
+// Caja del sendero (con margen): fuera de ella no hace falta medir la distancia al camino
+const CAJA_SENDERO = SENDERO_DENSO.reduce(([x0, z0, x1, z1], [x, z]) => [Math.min(x0, x), Math.min(z0, z), Math.max(x1, x), Math.max(z1, z)], [Infinity, Infinity, -Infinity, -Infinity])
 function pintarPorPendiente(geometria) {
   const normales = geometria.attributes.normal
+  const pos = geometria.attributes.position
   const colores = new Float32Array(normales.count * 3)
   const color = new THREE.Color()
   for (let i = 0; i < normales.count; i += 3) {
     // normal.y = coseno de la inclinación: 1 en llano, 0 en vertical. Roca por debajo de ~57°
     const y = (normales.getY(i) + normales.getY(i + 1) + normales.getY(i + 2)) / 3
     color.lerpColors(ROCA, HIERBA, THREE.MathUtils.smoothstep(y, 0.5, 0.62))
+    // Camino de tierra del sendero, pintado en el propio terreno: sigue la ladera sin tablas flotando
+    const x = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3
+    const z = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3
+    if (x > CAJA_SENDERO[0] - 2 && x < CAJA_SENDERO[2] + 2 && z > CAJA_SENDERO[1] - 2 && z < CAJA_SENDERO[3] + 2) {
+      const camino = THREE.MathUtils.smoothstep(1.2 - distanciaAlSendero(x, z), 0, 0.45)
+      color.lerp(TIERRA, camino * 0.9)
+    }
     for (let v = 0; v < 3; v++) color.toArray(colores, (i + v) * 3)
   }
   geometria.setAttribute('color', new THREE.Float32BufferAttribute(colores, 3))

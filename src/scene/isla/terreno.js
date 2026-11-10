@@ -1,6 +1,6 @@
 // Forma del blockout, sin three para poder probarla y usarla al colocar objetos.
 // Cada altura se comprueba contra 02 · Mapa §5 en terreno.test.js
-import { ARROYO, CAUCE, MUNDO } from '../../data/mundo.js'
+import { ARROYO, CAUCE, MUNDO, SENDERO } from '../../data/mundo.js'
 
 export const CONTORNO = { centroZ: -5.5, rx: 28, rz: 29 }
 
@@ -99,4 +99,30 @@ export function dentroDeLaIsla(x, z) {
   const u = x / CONTORNO.rx
   const v = (z - CONTORNO.centroZ) / CONTORNO.rz
   return Math.hypot(u, v) < radioDelContorno(Math.atan2(v, u))
+}
+
+// Sendero de la colina (02 Z6) muestreado cada ~0,25 m con un Catmull-Rom uniforme: lo usan el camino
+// pintado en el terreno (isla/Isla.jsx) y sus piedras (lugares/Lugares.jsx), así coinciden
+export const SENDERO_DENSO = (() => {
+  const p = SENDERO
+  const puntos = []
+  for (let i = 0; i < p.length - 1; i++) {
+    const [a, b, c, d] = [p[Math.max(0, i - 1)], p[i], p[i + 1], p[Math.min(p.length - 1, i + 2)]]
+    const pasos = Math.ceil(Math.hypot(c[0] - b[0], c[1] - b[1]) / 0.25)
+    for (let s = 0; s < pasos; s++) {
+      const t = s / pasos
+      const t2 = t * t
+      const t3 = t2 * t
+      const eje = (k) => 0.5 * (2 * b[k] + (-a[k] + c[k]) * t + (2 * a[k] - 5 * b[k] + 4 * c[k] - d[k]) * t2 + (-a[k] + 3 * b[k] - 3 * c[k] + d[k]) * t3)
+      puntos.push([eje(0), eje(1)])
+    }
+  }
+  puntos.push(p[p.length - 1])
+  return puntos
+})()
+
+export function distanciaAlSendero(x, z) {
+  let distancia = Infinity
+  for (let i = 0; i < SENDERO_DENSO.length - 1; i++) distancia = Math.min(distancia, distanciaASegmento(x, z, SENDERO_DENSO[i], SENDERO_DENSO[i + 1]))
+  return distancia
 }
