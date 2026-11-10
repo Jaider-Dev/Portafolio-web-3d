@@ -8,12 +8,14 @@ import { AMBIENTES, DURACION_CAMBIO, PALETA } from '../paleta'
 import { transicionHora } from './transicion'
 import { cuantos } from '../../utils/calidad.js'
 import { useCalidad } from '../useCalidad'
+import { GALERIA } from '../lugares/galeria'
 
 const RADIO_CIELO = 450 // la bóveda sigue a la cámara: siempre dentro de su far (600)
 const { manana: M, noche: N } = AMBIENTES
 const color = (hex) => new THREE.Color(hex)
 const mezcla = (a, b, t) => a + (b - a) * t
 const progresoDe = (hora) => (hora === 'noche' ? 1 : 0)
+const CENTRO_CUEVA = new THREE.Vector3(...GALERIA.centro)
 
 // Cielo en degradado: cénit → horizonte → "mar" de nubes bajo la isla. Shader propio en lugar de
 // <Sky> de Drei porque así cada hora usa exactamente los colores elegidos y se interpolan sin saltos
@@ -137,11 +139,14 @@ export function Ambiente() {
     niebla.current.color.copy(uniforms.horizonte.value)
 
     sol.current.color.lerpColors(...datos.luz, t)
-    sol.current.intensity = mezcla(M.luz.intensidad, N.luz.intensidad, t)
+    // Dentro de la cueva (06 §11.1) el cielo y el sol apenas llegan: así mandan las antorchas. 0 fuera,
+    // 1 en la galería; se mide por la distancia de la cámara al centro de la galería
+    const dentro = THREE.MathUtils.smoothstep(9 - camera.position.distanceTo(CENTRO_CUEVA), 0, 4)
+    sol.current.intensity = mezcla(M.luz.intensidad, N.luz.intensidad, t) * (1 - 0.7 * dentro)
     sol.current.position.lerpVectors(...datos.posicion, t)
     relleno.current.color.lerpColors(...datos.relleno, t)
     relleno.current.groundColor.lerpColors(...datos.suelo, t)
-    relleno.current.intensity = mezcla(M.cielo.intensidad, N.cielo.intensidad, t)
+    relleno.current.intensity = mezcla(M.cielo.intensidad, N.cielo.intensidad, t) * (1 - 0.85 * dentro)
 
     // La fogata "respira": dos senos lentos desfasados, sin parpadeo brusco (05 §7)
     const s = clock.elapsedTime

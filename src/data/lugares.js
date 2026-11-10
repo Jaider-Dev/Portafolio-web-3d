@@ -14,7 +14,7 @@ export const LUGARES = [
     id: 'cueva', nombre: 'Cueva de los murales', seccion: 'Proyectos', glifo: 'G3',
     menhir: [0, 0, -11], llegada: [4, 0.2, -20],
     // Dentro de la galería, cerca de la entrada y mirando al fondo (los murales); al girar se ve la cascada
-    camara: { posicion: [4, 2.1, -20.6], objetivo: [4, 1.7, -24.3] },
+    camara: { posicion: [4, 2.1, -21.4], objetivo: [4, 1.7, -24.3] },
   },
   {
     id: 'sendero', nombre: 'Sendero de los mojones', seccion: 'Trayectoria', glifo: 'G4',
