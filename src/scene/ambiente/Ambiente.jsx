@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { MUNDO } from '../../data/mundo.js'
@@ -65,7 +65,7 @@ function crearPunto() {
 
 const direccion = (posicion) => new THREE.Vector3(...posicion).normalize().multiplyScalar(RADIO_CIELO - 20)
 
-// Cielo, astros, estrellas, luces y niebla de la hora del día (D12, HU-37)
+// Cielo, astros, estrellas, luces, sombras y niebla de la hora del día (D12, HU-37, HU-13)
 export function Ambiente() {
   const progreso = useRef(progresoDe(useHora.getState().hora)) // 0 = mañana, 1 = noche
   const sol = useRef()
@@ -76,6 +76,10 @@ export function Ambiente() {
   const discoLuna = useRef()
   const estrellas = useRef()
   const boveda = useRef()
+  const [objetivo] = useState(() => new THREE.Object3D())
+  // Calidad "baja" apaga las sombras; "media" usa un mapa de 1024 y el resto, 2048 (HU-17 la ajustará)
+  const calidad = useExperiencia((s) => s.ajustes.calidad)
+  const resolucion = calidad === 'media' ? 1024 : 2048
 
   const datos = useMemo(() => ({
     materialCielo: new THREE.ShaderMaterial({
@@ -150,7 +154,27 @@ export function Ambiente() {
         </mesh>
       </group>
       <hemisphereLight ref={relleno} args={[M.cielo.color, M.cielo.suelo, M.cielo.intensidad]} />
-      <directionalLight ref={sol} position={M.luz.posicion} color={M.luz.color} intensity={M.luz.intensidad} />
+      {/* Sol de día y luna de noche: la única luz con sombras dinámicas (06 §10, HU-13). Target explícito
+          en la escena (<primitive>): así su matriz se actualiza sin depender de un helper */}
+      <primitive object={objetivo} position={[0, 0, 0]} />
+      <directionalLight
+        ref={sol}
+        name="luz-principal"
+        target={objetivo}
+        position={M.luz.posicion}
+        color={M.luz.color}
+        intensity={M.luz.intensidad}
+        castShadow={calidad !== 'baja'}
+        shadow-mapSize={[resolucion, resolucion]}
+        shadow-camera-left={-34}
+        shadow-camera-right={34}
+        shadow-camera-top={34}
+        shadow-camera-bottom={-34}
+        shadow-camera-near={10}
+        shadow-camera-far={130}
+        shadow-bias={-0.0005}
+        shadow-normalBias={0.04}
+      />
       {/* Sin sombras: una luz puntual con sombras renderiza la escena 6 veces más */}
       <pointLight ref={fogata} position={[xF, 1.3, zF]} color={PALETA.fuego} intensity={M.fogata} distance={18} decay={2} />
     </>

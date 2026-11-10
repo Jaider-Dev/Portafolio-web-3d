@@ -43,14 +43,14 @@ function usePintado(ruta) {
 
 function Modelo({ ruta, ...props }) {
   const scene = usePintado(ruta)
-  return <Clone object={scene} {...props} />
+  return <Clone object={scene} castShadow {...props} />
 }
 
 export function Menhires() {
   const scene = usePintado(RUTAS.menhir)
   return (
     <group name="menhires">
-      {LUGARES.map((lugar) => <Clone key={lugar.id} object={scene} name={`menhir-${lugar.id}`} position={lugar.menhir} />)}
+      {LUGARES.map((lugar) => <Clone key={lugar.id} object={scene} castShadow name={`menhir-${lugar.id}`} position={lugar.menhir} />)}
     </group>
   )
 }
@@ -68,7 +68,7 @@ export function Campamento() {
         const angulo = Math.PI / 4 + (i / cantidad) * Math.PI * 2
         return (
           <group key={i} position={[xFogata + Math.cos(angulo) * radio, 0.22, zFogata + Math.sin(angulo) * radio]} rotation-y={-angulo + Math.PI / 2}>
-            <mesh rotation-z={Math.PI / 2}>
+            <mesh castShadow rotation-z={Math.PI / 2}>
               <cylinderGeometry args={[0.22, 0.24, 1.3, 7]} />
               <meshStandardMaterial color={PALETA.madera} flatShading />
             </mesh>
@@ -76,11 +76,11 @@ export function Campamento() {
         )
       })}
       <group position={MUNDO.mochila} name="mochila">
-        <mesh position={[0, 0.4, 0]}>
+        <mesh castShadow position={[0, 0.4, 0]}>
           <boxGeometry args={[0.6, 0.8, 0.4]} />
           <meshStandardMaterial color={PALETA.madera} flatShading />
         </mesh>
-        <mesh position={[0, 0.84, 0]} rotation-x={-0.25}>
+        <mesh castShadow position={[0, 0.84, 0]} rotation-x={-0.25}>
           <boxGeometry args={[0.42, 0.06, 0.3]} />
           <meshStandardMaterial color={PALETA.agua} flatShading />
         </mesh>
@@ -98,7 +98,7 @@ export function Vado() {
   return (
     <group name="vado">
       {Array.from({ length: piedras }, (_, i) => (
-        <mesh key={i} position={[desde + (i * (hasta - desde)) / (piedras - 1), y, z]}>
+        <mesh castShadow key={i} position={[desde + (i * (hasta - desde)) / (piedras - 1), y, z]}>
           <cylinderGeometry args={[0.42, 0.5, 0.5, 7]} />
           <meshStandardMaterial color={PALETA.piedra} flatShading />
         </mesh>
@@ -117,13 +117,13 @@ export function Cueva() {
         <boxGeometry args={[ancho, alto, profundidad]} />
         <meshStandardMaterial color={PALETA.cueva} side={THREE.BackSide} roughness={1} />
       </mesh>
-      <mesh position={[MUNDO.entradaCueva[0], 1.5, -17.65]}>
+      <mesh castShadow position={[MUNDO.entradaCueva[0], 1.5, -17.65]}>
         <boxGeometry args={[3.4, 3, 0.3]} />
         <meshStandardMaterial color={PALETA.cueva} flatShading />
       </mesh>
       {/* Repisa de piedras que se pierde tras la cortina */}
       {[0, 1, 2, 3, 4].map((i) => (
-        <mesh key={i} position={[MUNDO.repisa.desde + i, MUNDO.repisa.y + 0.08, MUNDO.repisa.z]}>
+        <mesh castShadow key={i} position={[MUNDO.repisa.desde + i, MUNDO.repisa.y + 0.08, MUNDO.repisa.z]}>
           <boxGeometry args={[0.8, 0.16, 0.7]} />
           <meshStandardMaterial color={PALETA.piedra} flatShading />
         </mesh>
@@ -150,7 +150,7 @@ export function Sendero() {
   const peldanos = puntosDelSendero()
   return (
     <group name="sendero">
-      <Instances limit={peldanos.length}>
+      <Instances limit={peldanos.length} castShadow receiveShadow>
         <boxGeometry args={[1.5, 0.3, 0.95]} />
         <meshStandardMaterial color={PALETA.sendero} flatShading />
         {peldanos.map(({ posicion, giro }) => <Instance key={posicion.join()} position={posicion} rotation-y={giro} />)}
@@ -162,11 +162,11 @@ export function Sendero() {
 export function Cima() {
   return (
     <group name="cima">
-      <mesh position={[MUNDO.mirador[0], MUNDO.mirador[1] + 0.2, MUNDO.mirador[2]]}>
+      <mesh castShadow position={[MUNDO.mirador[0], MUNDO.mirador[1] + 0.2, MUNDO.mirador[2]]}>
         <cylinderGeometry args={[1.8, 2.1, 0.5, 8]} />
         <meshStandardMaterial color={PALETA.piedra} flatShading />
       </mesh>
-      <mesh position={[MUNDO.manantial[0], MUNDO.manantial[1] + 0.2, MUNDO.manantial[2]]}>
+      <mesh castShadow position={[MUNDO.manantial[0], MUNDO.manantial[1] + 0.2, MUNDO.manantial[2]]}>
         <dodecahedronGeometry args={[0.9]} />
         <meshStandardMaterial color={PALETA.piedra} flatShading />
       </mesh>

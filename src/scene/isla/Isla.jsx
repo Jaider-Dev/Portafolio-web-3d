@@ -82,7 +82,7 @@ export function Isla() {
   const masa = useMemo(() => crearMasa(), [])
   return (
     <group name="isla">
-      <mesh geometry={superficie}>
+      <mesh geometry={superficie} castShadow receiveShadow>
         <meshStandardMaterial color={PALETA.meseta} flatShading roughness={1} />
       </mesh>
       <mesh geometry={masa}>

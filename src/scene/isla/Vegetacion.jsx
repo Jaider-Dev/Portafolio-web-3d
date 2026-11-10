@@ -16,7 +16,7 @@ const SILUETA_CIMA = [14, 16.1, -24]
 export function Vegetacion() {
   return (
     <group name="vegetacion">
-      <Instances limit={ARBOLES.length + 1}>
+      <Instances limit={ARBOLES.length + 1} castShadow>
         <coneGeometry args={[1.3, 7, 7]} />
         <meshStandardMaterial color={PALETA.vegetacion} flatShading roughness={1} />
         {ARBOLES.map(([x, z], i) => {
