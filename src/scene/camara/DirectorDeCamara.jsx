@@ -10,6 +10,9 @@ const MIN_DISTANCIA = 3
 const MAX_DISTANCIA = 60
 const MAX_POLAR = Math.PI * 0.48
 const LIMITES = new THREE.Box3(new THREE.Vector3(-30, 0, -33), new THREE.Vector3(30, 18, 26))
+// Galería de la cueva (lugares/Cueva.jsx): el objetivo no sale de ella y la cámara queda a ≤ 4 m
+const LIMITES_CUEVA = new THREE.Box3(new THREE.Vector3(1, 1, -27), new THREE.Vector3(7, 2.5, -22))
+const DISTANCIA_CUEVA = 4
 
 const DURACION = { vuelo: 3.5, viajando: 1.5 } // segundos (HU-03 y HU-08)
 const FOV_INTRO = 38
@@ -64,18 +67,22 @@ export function DirectorDeCamara() {
   const fase = useExperiencia((s) => s.fase)
   const destino = useExperiencia((s) => s.destino)
   const menuViaje = useExperiencia((s) => s.menuViaje)
+  const zona = useExperiencia((s) => s.zona)
 
   // Límites y bloqueo según la fase: en cinemática no hay límites, explorando sí
   useEffect(() => {
     const c = controles.current
     if (!c) return
     const explorando = fase === 'explorando'
+    // Dentro de la cueva se orbita alrededor del centro de la galería sin salir de ella: girando
+    // se ven los murales del fondo y, hacia la entrada, la cascada cayendo tras la puerta
+    const enCueva = explorando && zona === 'cueva'
     c.enabled = explorando && !menuViaje
-    c.minDistance = explorando ? MIN_DISTANCIA : 0
-    c.maxDistance = explorando ? distanciaMaxima(aspecto) : Infinity
+    c.minDistance = enCueva ? 1 : explorando ? MIN_DISTANCIA : 0
+    c.maxDistance = enCueva ? DISTANCIA_CUEVA : explorando ? distanciaMaxima(aspecto) : Infinity
     c.maxPolarAngle = explorando ? MAX_POLAR : Math.PI
-    c.setBoundary(explorando ? LIMITES : null)
-  }, [fase, menuViaje, aspecto])
+    c.setBoundary(enCueva ? LIMITES_CUEVA : explorando ? LIMITES : null)
+  }, [fase, menuViaje, aspecto, zona])
 
   // Empieza un vuelo cuando el store pide ir a un destino
   useEffect(() => {

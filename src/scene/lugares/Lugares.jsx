@@ -109,31 +109,6 @@ export function Vado() {
   )
 }
 
-// La cueva tapada del sprint 1: una pieza cierra la entrada y por dentro hay una sala vacía
-export function Cueva() {
-  const { centro, ancho, fondo, alto } = MUNDO.galeria
-  const profundidad = fondo + 1.4 // incluye la antesala, desde la entrada hasta el fondo
-  return (
-    <group name="cueva">
-      <mesh position={[centro[0], alto / 2, centro[2] + 0.7]}>
-        <boxGeometry args={[ancho, alto, profundidad]} />
-        <meshStandardMaterial color={PALETA.cueva} side={THREE.BackSide} roughness={1} />
-      </mesh>
-      <mesh castShadow position={[MUNDO.entradaCueva[0], 1.5, -17.65]}>
-        <boxGeometry args={[3.4, 3, 0.3]} />
-        <meshStandardMaterial color={PALETA.cueva} flatShading />
-      </mesh>
-      {/* Repisa de piedras que se pierde tras la cortina */}
-      {[0, 1, 2, 3, 4].map((i) => (
-        <mesh castShadow key={i} position={[MUNDO.repisa.desde + i, MUNDO.repisa.y + 0.08, MUNDO.repisa.z]}>
-          <boxGeometry args={[0.8, 0.16, 0.7]} />
-          <meshStandardMaterial color={PALETA.piedra} flatShading />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
 // Reparte peldaños a lo largo de la polilínea del sendero, siguiendo el terreno
 function puntosDelSendero(separacion = 1.1) {
   const curva = new THREE.CatmullRomCurve3(SENDERO.map(([x, z]) => new THREE.Vector3(x, 0, z)))
