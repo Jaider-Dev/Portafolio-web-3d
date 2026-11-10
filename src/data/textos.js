@@ -32,6 +32,13 @@ export const TEXTOS = {
     abrirSobreMi: (nombre, rol) => `${nombre}, ${rol}. Abrir Sobre mí`,
     region: 'Accesos de la isla',
   },
+  murales: {
+    destacado: 'Proyecto destacado',
+    proxima: 'Próxima expedición',
+    pintando: 'Todavía la estoy pintando',
+    lugar: 'Cueva de los murales',
+    verClasico: 'Ver en la versión clásica',
+  },
   ajustes: {
     abrir: 'Ajustes',
     lugar: 'Mochila',
