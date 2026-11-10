@@ -20,7 +20,7 @@ const TABLA_02 = {
   'centro de la galería': [MUNDO.galeria.centro, [4, 1, -25]],
   'menhir M3': [LUGARES_POR_ID.cueva.menhir, [0, 0, -11]],
   'inicio del sendero': [MUNDO.inicioSendero, [6, 0, 0]],
-  'menhir M4': [LUGARES_POR_ID.sendero.menhir, [10, 7, -6]],
+  'menhir M4': [LUGARES_POR_ID.sendero.menhir, [12.4, 6.3, -5.4]],
   'claro de la cima': [MUNDO.claroCima, [10, 16, -21]],
   manantial: [MUNDO.manantial, [6, 15.5, -20]],
   mirador: [MUNDO.mirador, [13, 16, -14]],

@@ -3,6 +3,7 @@ import { Sparkles } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { ARROYO, CAUCE, MUNDO } from '../../data/mundo.js'
+import { ESTANQUE, MARGEN_ORILLA, medioAnchoDelRio } from '../isla/terreno.js'
 import { useExperiencia } from '../../store/useExperiencia'
 import { useHora } from '../../store/hora'
 import { PALETA } from '../paleta'
@@ -56,8 +57,9 @@ function crearCinta(puntos, { ancho, lateral, caida, segmentos = 80 }) {
 }
 
 // Ancho de 02 · Mapa §5: 4 m aguas arriba, 3,5 m en el vado, 4,5 m cerca del borde
-const anchoDelRio = ({ z }) => (z > 15 ? 4.5 : z > 4 ? 3.5 : 4)
-const ANCHO_ARROYO = 1.5
+// El agua usa el mismo ancho que el cauce del terreno más un margen: su orilla queda bajo la tierra
+const anchoDelRio = ({ z }) => 2 * (medioAnchoDelRio(z) + MARGEN_ORILLA)
+const ANCHO_ARROYO = 2 // el cauce del arroyo sube entre 0,6 y 1,6 m del eje (terreno.js)
 const SALIDA_DEL_BORDE = [-4.8, -0.3, 24]
 
 const METROS_POR_REPETICION = 5 // una "ola" de la textura cada 5 m: misma densidad en todo el cauce
@@ -125,7 +127,7 @@ function crearAgua() {
   })
   const salidaRio = lateralFinal(rio)
   const baja = crearCinta(RECORRIDO_BAJA, {
-    ancho: () => 4.5,
+    ancho: () => anchoDelRio({ z: SALIDA_DEL_BORDE[2] }), // el mismo ancho con el que llega el río
     lateral: () => salidaRio, // sigue de frente al río: cae como una lámina
     caida: { v0: VELOCIDAD.rio },
   })
@@ -159,7 +161,7 @@ function useCorrientes() {
   return agua
 }
 
-function MaterialDeAgua({ mapa, alphaMap, opacidad = 0.88 }) {
+function MaterialDeAgua({ mapa, alphaMap, opacidad = 0.88, escribeProfundidad = false }) {
   return (
     <meshStandardMaterial
       map={mapa}
@@ -168,13 +170,13 @@ function MaterialDeAgua({ mapa, alphaMap, opacidad = 0.88 }) {
       transparent
       opacity={opacidad}
       side={THREE.DoubleSide}
-      depthWrite={false}
+      depthWrite={escribeProfundidad}
     />
   )
 }
 
 // Bruma y espuma de partículas en la base de las cascadas (05 §8). De noche, más tenue
-function Bruma({ count = 40, ...props }) {
+function Bruma({ count = 40, speed = 0.5, ...props }) {
   const noche = useHora((s) => s.hora === 'noche')
   const reducir = useExperiencia((s) => s.ajustes.reducirMovimiento)
   const { perfil } = useCalidad() // menos partículas en calidad media y baja (06 §19.1)
@@ -182,7 +184,7 @@ function Bruma({ count = 40, ...props }) {
     <Sparkles
       count={cuantos(count, perfil.particulas)}
       size={6}
-      speed={reducir ? 0 : 0.5}
+      speed={reducir ? 0 : speed}
       opacity={noche ? 0.35 : 0.8}
       color={PALETA.espuma}
       noise={1}
@@ -210,6 +212,7 @@ export function Agua() {
   const { rio, arroyo, poza, alta, baja, desvanecer, espuma } = useCorrientes()
   const { centro } = MUNDO.poza
   const pozaOrganica = useMemo(() => crearPoza(MUNDO.poza.radio), [])
+  const estanqueOrganico = useMemo(() => crearPoza(ESTANQUE.radio, 24), [])
 
   return (
     <group name="agua">
@@ -220,9 +223,11 @@ export function Agua() {
         <MaterialDeAgua mapa={arroyo.mapa} />
       </mesh>
       {/* Poza poco profunda: más transparente y casi quieta (se puede cruzar caminando, sprint 4) */}
-      <mesh position={centro} rotation-x={-Math.PI / 2} receiveShadow name="poza">
+      {/* La poza se dibuja antes que el río (renderOrder), 1 cm más alta y escribiendo profundidad: donde se
+          solapan, el río queda detrás y no se suman dos transparencias (la unión no se oscurece) */}
+      <mesh position={[centro[0], centro[1] + 0.01, centro[2]]} rotation-x={-Math.PI / 2} receiveShadow name="poza" renderOrder={-1}>
         <primitive object={pozaOrganica} attach="geometry" />
-        <MaterialDeAgua mapa={poza.mapa} opacidad={0.72} />
+        <MaterialDeAgua mapa={poza.mapa} escribeProfundidad />
       </mesh>
       <mesh geometry={alta.geometria} name="cascada-alta">
         <MaterialDeAgua mapa={alta.mapa} />
@@ -233,6 +238,12 @@ export function Agua() {
         <MaterialDeAgua mapa={baja.mapa} alphaMap={desvanecer} />
       </mesh>
       <Bruma position={[SALIDA_DEL_BORDE[0], -0.8, SALIDA_DEL_BORDE[2] + 0.7]} scale={[5, 1.5, 2]} count={30} />
+      {/* Estanque del manantial: el agua brota aquí (burbujas) y de aquí sale el arroyo hacia la cascada */}
+      <mesh position={ESTANQUE.centro} rotation-x={-Math.PI / 2} receiveShadow name="estanque">
+        <primitive object={estanqueOrganico} attach="geometry" />
+        <MaterialDeAgua mapa={poza.mapa} />
+      </mesh>
+      <Bruma position={[ESTANQUE.centro[0], ESTANQUE.centro[1] + 0.25, ESTANQUE.centro[2]]} scale={[1.6, 0.5, 1.6]} count={14} size={4} speed={1.2} />
     </group>
   )
 }

@@ -8,6 +8,7 @@ import { alturaDelTerreno } from '../isla/terreno.js'
 import { PALETA } from '../paleta'
 import { useCalidad } from '../useCalidad'
 import { ANTESALA, crearGaleria, GALERIA, PUERTA, puntoEnLaPared, ruido } from './galeria'
+import { texturaHalo } from '../efectos'
 import { Brasas } from './Fogata'
 import { Murales } from './Murales'
 
@@ -139,26 +140,6 @@ const CRISTALES = [
   { posicion: [1.2, 0, -28.6], giro: 2.2 }, { posicion: [7.4, 0, -28.4], giro: 0.9 },
 ]
 
-// Halo del fuego: un sprite con un degradado radial y mezcla aditiva, siempre de cara a la cámara.
-// Imita el resplandor que la llama deja en el aire (sin postprocesado)
-let texturaHalo = null
-function halo() {
-  if (texturaHalo) return texturaHalo
-  const lado = 64
-  const lienzo = document.createElement('canvas')
-  lienzo.width = lienzo.height = lado
-  const ctx = lienzo.getContext('2d')
-  const g = ctx.createRadialGradient(lado / 2, lado / 2, 0, lado / 2, lado / 2, lado / 2)
-  g.addColorStop(0, 'rgba(255,220,150,0.9)')
-  g.addColorStop(0.35, 'rgba(244,175,54,0.35)')
-  g.addColorStop(1, 'rgba(244,175,54,0)')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, lado, lado)
-  texturaHalo = new THREE.CanvasTexture(lienzo)
-  texturaHalo.colorSpace = THREE.SRGBColorSpace
-  return texturaHalo
-}
-
 // Antorcha: palo, dos llamas que respiran, halo y brasas que suben como en la fogata.
 // La luz real (que ilumina la roca y los murales) la ponen LucesDeAntorchas en las más cercanas
 function Antorcha({ posicion, giro, indice }) {
@@ -193,7 +174,7 @@ function Antorcha({ posicion, giro, indice }) {
         <meshBasicMaterial color={PALETA.fuego} toneMapped={false} />
       </mesh>
       <sprite ref={resplandor} position={[0, 0.22, 0]}>
-        <spriteMaterial map={halo()} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        <spriteMaterial map={texturaHalo()} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
       </sprite>
       <Brasas cantidad={10} altura={1.3} abertura={0.08} base={0.25} tamano={0.045} semilla={7 + indice * 13} />
     </group>
