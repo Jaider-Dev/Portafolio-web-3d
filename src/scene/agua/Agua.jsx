@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { Sparkles } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -6,23 +6,40 @@ import { ARROYO, CAUCE, MUNDO } from '../../data/mundo.js'
 import { useExperiencia } from '../../store/useExperiencia'
 import { useHora } from '../../store/hora'
 import { PALETA } from '../paleta'
-import { crearDegradado, crearTexturaDeFlujo } from './texturas'
+import { crearDegradado, crearEspumaRadial, crearTexturaDeFlujo } from './texturas'
 
-// Cinta que sigue una curva; la coordenada V avanza con el agua (06 §9.1): desplazar la textura en V
-// hace "correr" el río. Devuelve también su longitud para repetir la textura sin estirarla
-function crearCinta(puntos, ancho, segmentos = 80) {
+const ARRIBA = new THREE.Vector3(0, 1, 0)
+const GRAVEDAD = 4.9 // la mitad de la real: la caída se lee mejor y sigue acelerando
+
+// Cinta que sigue una curva (06 §9.1). Por defecto la coordenada V va de 0 a 1 a lo largo del agua.
+// Con `caida`, V es el tiempo (en segundos) que tarda el agua en llegar a cada punto, con
+// v = √(v0² + 2·g·h): si la textura avanza a ritmo constante en V, en la cascada las vetas arrancan a
+// la velocidad de la corriente y se estiran al acelerar, como el agua que cae
+function crearCinta(puntos, { ancho, lateral, caida, segmentos = 80 }) {
   const curva = new THREE.CatmullRomCurve3(puntos.map((p) => new THREE.Vector3(...p)))
+  const longitud = curva.getLength()
   const posiciones = []
   const uvs = []
   const indices = []
-  const arriba = new THREE.Vector3(0, 1, 0)
-  const lateral = new THREE.Vector3()
+  const lado = new THREE.Vector3()
+  const anterior = new THREE.Vector3()
+  const alturaInicial = curva.getPointAt(0).y
+  let tiempo = 0
   for (let i = 0; i <= segmentos; i++) {
     const t = i / segmentos
     const punto = curva.getPointAt(t) // por longitud de arco: el agua avanza a ritmo constante
-    lateral.crossVectors(curva.getTangentAt(t), arriba).normalize().multiplyScalar(ancho(punto) / 2)
-    posiciones.push(punto.x - lateral.x, punto.y, punto.z - lateral.z, punto.x + lateral.x, punto.y, punto.z + lateral.z)
-    uvs.push(0, t, 1, t)
+    const tangente = curva.getTangentAt(t)
+    if (lateral) lado.copy(lateral(t, tangente))
+    else lado.crossVectors(tangente, ARRIBA)
+    lado.normalize().multiplyScalar(ancho(punto, t) / 2)
+    posiciones.push(punto.x - lado.x, punto.y - lado.y, punto.z - lado.z, punto.x + lado.x, punto.y + lado.y, punto.z + lado.z)
+    if (caida && i > 0) {
+      const velocidad = Math.sqrt(caida.v0 ** 2 + 2 * GRAVEDAD * Math.max(0, alturaInicial - punto.y))
+      tiempo += punto.distanceTo(anterior) / velocidad
+    }
+    anterior.copy(punto)
+    const v = caida ? tiempo : t
+    uvs.push(0, v, 1, v)
     if (i < segmentos) {
       const a = i * 2
       indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2)
@@ -33,52 +50,90 @@ function crearCinta(puntos, ancho, segmentos = 80) {
   geometria.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
   geometria.setIndex(indices)
   geometria.computeVertexNormals()
-  return { geometria, longitud: curva.getLength() }
+  return { geometria, curva, longitud, duracion: tiempo }
 }
 
 // Ancho de 02 · Mapa §5: 4 m aguas arriba, 3,5 m en el vado, 4,5 m cerca del borde
 const anchoDelRio = ({ z }) => (z > 15 ? 4.5 : z > 4 ? 3.5 : 4)
-
+const ANCHO_ARROYO = 1.5
 const SALIDA_DEL_BORDE = [-4.8, -0.3, 24]
-const ALTO_CASCADA_BAJA = 25.4
+
 const METROS_POR_REPETICION = 5 // una "ola" de la textura cada 5 m: misma densidad en todo el cauce
+// Velocidad en metros por segundo a lo largo del agua; en las cascadas es la de entrada (luego aceleran)
+const VELOCIDAD = { rio: 1.4, arroyo: 2.2, poza: 0.35 }
 
-// Velocidad en metros por segundo a lo largo del agua (las cascadas caen bastante más rápido)
-const VELOCIDAD = { rio: 1.4, arroyo: 2.2, poza: 0.35, cascada: 7 }
+// Cascada alta: continúa el arroyo desde su final, se curva sobre el labio, cae delante de la pared
+// (cortina de la cueva, 06 §9.3) y entra en la poza
+const RECORRIDO_ALTA = [ARROYO[1], [3.8, 11.75, -16.7], [3.75, 10.5, -16.55], [3.7, 6, -16.45], [3.6, 1.5, -16.3], [3.4, -0.2, -15.6], [3.2, -0.42, -14.5]]
+// Cascada baja: continúa el río desde su final, se curva sobre el borde y cae hacia las nubes
+const RECORRIDO_BAJA = [SALIDA_DEL_BORDE, [-4.95, -0.9, 24.5], [-5.05, -3, 25.1], [-5.2, -12, 25.9], [-5.4, -26, 26.6]]
+const IMPACTO_ALTA = [3.25, -0.44, -14.7]
 
-// Cada superficie tiene su propia textura (un clon que comparte la imagen) para moverse a su ritmo
-function useCorrientes() {
-  const texturas = useMemo(() => {
-    const conOrillas = crearTexturaDeFlujo({ orillas: true })
-    const sinOrillas = crearTexturaDeFlujo({ orillas: false })
-    const clon = (base, largo) => {
-      const t = base.clone()
-      t.repeat.set(1, largo / METROS_POR_REPETICION)
-      return t
-    }
-    const rio = crearCinta([...CAUCE, SALIDA_DEL_BORDE], anchoDelRio)
-    const arroyo = crearCinta(ARROYO, () => 1.5, 12)
-    return {
-      rio: { ...rio, mapa: clon(conOrillas, rio.longitud), velocidad: VELOCIDAD.rio / rio.longitud },
-      arroyo: { ...arroyo, mapa: clon(conOrillas, arroyo.longitud), velocidad: VELOCIDAD.arroyo / arroyo.longitud },
-      poza: { mapa: clon(sinOrillas, MUNDO.poza.radio * 2), velocidad: VELOCIDAD.poza / (MUNDO.poza.radio * 2) },
-      alta: { mapa: clon(sinOrillas, MUNDO.cascadaAlta.borde[1]), velocidad: VELOCIDAD.cascada / MUNDO.cascadaAlta.borde[1] },
-      baja: { mapa: clon(sinOrillas, ALTO_CASCADA_BAJA), velocidad: VELOCIDAD.cascada / ALTO_CASCADA_BAJA },
-      desvanecer: crearDegradado(), // alphaMap fijo: la cascada baja se pierde hacia abajo
-    }
-  }, [])
+// Lateral que gira suavemente desde el de la corriente que llega hasta `final` en el primer tramo:
+// así el borde de la cascada coincide con el de su arroyo o río y después cae de frente
+const lateralQueGira = (inicial, final, tramo = 0.25) => (t) =>
+  new THREE.Vector3().lerpVectors(inicial, final, THREE.MathUtils.smoothstep(t, 0, tramo))
 
-  // offset en "texturas por segundo" × delta: la velocidad aparente no depende de los FPS.
-  // En el río la V crece aguas abajo (offset negativo); en un plano la V crece hacia arriba y el agua
-  // cae, así que ahí el offset es positivo
-  useFrame((_, delta) => {
-    const d = Math.min(delta, 0.1) // tras una pestaña en segundo plano no da un salto
-    const { rio, arroyo, poza, alta, baja } = texturas
-    for (const corriente of [rio, arroyo, poza]) corriente.mapa.offset.y -= corriente.mapa.repeat.y * corriente.velocidad * d
-    for (const caida of [alta, baja]) caida.mapa.offset.y += caida.mapa.repeat.y * caida.velocidad * d
+function crearAgua() {
+  const conOrillas = crearTexturaDeFlujo({ orillas: true })
+  const sinOrillas = crearTexturaDeFlujo({ orillas: false })
+  const porMetros = (base, largo) => {
+    const t = base.clone()
+    t.repeat.set(1, largo / METROS_POR_REPETICION)
+    return t
+  }
+  // En una cascada V son segundos: una repetición cada METROS_POR_REPETICION / v0 segundos hace que,
+  // en la unión, las vetas tengan la misma separación que en la corriente que llega
+  const porTiempo = (base, v0) => {
+    const t = base.clone()
+    t.repeat.set(1, v0 / METROS_POR_REPETICION)
+    return t
+  }
+
+  const rio = crearCinta([...CAUCE, SALIDA_DEL_BORDE], { ancho: anchoDelRio })
+  const arroyo = crearCinta(ARROYO, { ancho: () => ANCHO_ARROYO, segmentos: 12 })
+  const lateralFinal = (cinta) => new THREE.Vector3().crossVectors(cinta.curva.getTangentAt(1), ARRIBA).normalize()
+
+  const alta = crearCinta(RECORRIDO_ALTA, {
+    // del ancho del arroyo a 3 m en la caída y 3,2 m al entrar en la poza
+    ancho: (_, t) => (t < 0.25 ? THREE.MathUtils.lerp(ANCHO_ARROYO, 3, t / 0.25) : THREE.MathUtils.lerp(3, 3.2, (t - 0.25) / 0.75)),
+    lateral: lateralQueGira(lateralFinal(arroyo), new THREE.Vector3(-1, 0, 0)),
+    caida: { v0: VELOCIDAD.arroyo },
+  })
+  const salidaRio = lateralFinal(rio)
+  const baja = crearCinta(RECORRIDO_BAJA, {
+    ancho: () => 4.5,
+    lateral: () => salidaRio, // sigue de frente al río: cae como una lámina
+    caida: { v0: VELOCIDAD.rio },
   })
 
-  return texturas
+  // alphaMap: V de la cascada baja va de 0 (borde) a su duración en segundos; se escala a 0–1
+  const desvanecer = crearDegradado()
+  desvanecer.repeat.set(1, 1 / baja.duracion)
+
+  return {
+    rio: { ...rio, mapa: porMetros(conOrillas, rio.longitud), avance: VELOCIDAD.rio / METROS_POR_REPETICION },
+    arroyo: { ...arroyo, mapa: porMetros(conOrillas, arroyo.longitud), avance: VELOCIDAD.arroyo / METROS_POR_REPETICION },
+    poza: { mapa: porMetros(sinOrillas, MUNDO.poza.radio * 2), avance: VELOCIDAD.poza / METROS_POR_REPETICION },
+    alta: { ...alta, mapa: porTiempo(conOrillas, VELOCIDAD.arroyo) },
+    baja: { ...baja, mapa: porTiempo(conOrillas, VELOCIDAD.rio) },
+    desvanecer,
+    espuma: crearEspumaRadial(),
+  }
+}
+
+// Todas las superficies avanzan en la dirección en que crece su V: offset negativo.
+// offset por segundo = repeticiones por segundo; × delta, la velocidad no depende de los FPS
+function useCorrientes() {
+  const agua = useMemo(() => crearAgua(), [])
+  useFrame((_, delta) => {
+    const d = Math.min(delta, 0.1) // tras una pestaña en segundo plano no da un salto
+    const { rio, arroyo, poza, alta, baja } = agua
+    for (const corriente of [rio, arroyo, poza]) corriente.mapa.offset.y -= corriente.avance * d
+    // en las cascadas V son segundos: avanzan `repeat.y` unidades de textura por segundo
+    for (const caida of [alta, baja]) caida.mapa.offset.y -= caida.mapa.repeat.y * d
+  })
+  return agua
 }
 
 function MaterialDeAgua({ mapa, alphaMap, opacidad = 0.88 }) {
@@ -112,10 +167,24 @@ function Bruma(props) {
   )
 }
 
+// Espuma donde la cascada alta golpea la poza: un disco con borde difuso que "late" despacio
+function EspumaDeImpacto({ textura }) {
+  const disco = useRef()
+  useFrame(({ clock }) => {
+    if (useExperiencia.getState().ajustes.reducirMovimiento) return
+    disco.current.scale.setScalar(1 + 0.08 * Math.sin(clock.elapsedTime * 2.4))
+  })
+  return (
+    <mesh ref={disco} position={IMPACTO_ALTA} rotation-x={-Math.PI / 2} name="espuma-impacto">
+      <circleGeometry args={[1.9, 24]} />
+      <meshStandardMaterial color={PALETA.espuma} alphaMap={textura} transparent opacity={0.85} depthWrite={false} roughness={0.6} />
+    </mesh>
+  )
+}
+
 export function Agua() {
-  const { rio, arroyo, poza, alta, baja, desvanecer } = useCorrientes()
+  const { rio, arroyo, poza, alta, baja, desvanecer, espuma } = useCorrientes()
   const { centro, radio } = MUNDO.poza
-  const [xAlta, yAlta, zAlta] = MUNDO.cascadaAlta.borde
 
   return (
     <group name="agua">
@@ -130,18 +199,15 @@ export function Agua() {
         <circleGeometry args={[radio, 24]} />
         <MaterialDeAgua mapa={poza.mapa} opacidad={0.72} />
       </mesh>
-      {/* Cascada alta: cortina delante de la cueva (06 §9.3) */}
-      <mesh position={[xAlta, yAlta / 2, zAlta - 0.2]} name="cascada-alta">
-        <planeGeometry args={[MUNDO.cascadaAlta.ancho, yAlta]} />
+      <mesh geometry={alta.geometria} name="cascada-alta">
         <MaterialDeAgua mapa={alta.mapa} />
       </mesh>
-      <Bruma position={[xAlta, 0.8, zAlta + 1]} scale={[MUNDO.cascadaAlta.ancho + 1.5, 1.8, 2.5]} />
-      {/* Cascada baja: cae por el borde y se desvanece hacia las nubes bajo la isla */}
-      <mesh position={[SALIDA_DEL_BORDE[0], -0.3 - ALTO_CASCADA_BAJA / 2, SALIDA_DEL_BORDE[2]]} name="cascada-baja">
-        <planeGeometry args={[4.5, ALTO_CASCADA_BAJA]} />
+      <EspumaDeImpacto textura={espuma} />
+      <Bruma position={[IMPACTO_ALTA[0], 0.6, IMPACTO_ALTA[2] - 0.3]} scale={[3.6, 1.6, 2.4]} />
+      <mesh geometry={baja.geometria} name="cascada-baja">
         <MaterialDeAgua mapa={baja.mapa} alphaMap={desvanecer} />
       </mesh>
-      <Bruma position={[SALIDA_DEL_BORDE[0], -0.6, SALIDA_DEL_BORDE[2] + 0.6]} scale={[5, 1.5, 2]} count={30} />
+      <Bruma position={[SALIDA_DEL_BORDE[0], -0.8, SALIDA_DEL_BORDE[2] + 0.7]} scale={[5, 1.5, 2]} count={30} />
     </group>
   )
 }

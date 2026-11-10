@@ -58,7 +58,8 @@ export function crearTexturaDeFlujo({ orillas }) {
   return textura
 }
 
-// alphaMap vertical: opaco arriba y transparente abajo (la cascada baja se pierde entre las nubes).
+// alphaMap a lo largo de la cascada: opaco en el borde (V = 0) y transparente al final (V = 1), para que
+// la cascada baja se pierda entre las nubes. Sin flipY, la fila 0 del canvas es V = 0.
 // Un alphaMap se lee en el canal verde y no es un color: no lleva espacio de color sRGB
 export function crearDegradado() {
   const lienzo = document.createElement('canvas')
@@ -71,5 +72,33 @@ export function crearDegradado() {
   degradado.addColorStop(1, '#000')
   ctx.fillStyle = degradado
   ctx.fillRect(0, 0, 4, 128)
+  const textura = new THREE.CanvasTexture(lienzo)
+  textura.flipY = false
+  return textura
+}
+
+// alphaMap radial para la espuma donde cae la cascada: densa en el centro, se diluye hacia el borde,
+// con un anillo irregular para que no parezca un disco perfecto
+export function crearEspumaRadial() {
+  const lado = 64
+  const lienzo = document.createElement('canvas')
+  lienzo.width = lienzo.height = lado
+  const ctx = lienzo.getContext('2d')
+  const degradado = ctx.createRadialGradient(lado / 2, lado / 2, 0, lado / 2, lado / 2, lado / 2)
+  degradado.addColorStop(0, '#fff')
+  degradado.addColorStop(0.45, '#bbb')
+  degradado.addColorStop(1, '#000')
+  ctx.fillStyle = degradado
+  ctx.fillRect(0, 0, lado, lado)
+  const azar = generador(5)
+  ctx.fillStyle = '#fff'
+  for (let i = 0; i < 40; i++) {
+    const angulo = azar() * Math.PI * 2
+    const r = lado * (0.15 + azar() * 0.25)
+    ctx.globalAlpha = 0.25 + azar() * 0.35
+    ctx.beginPath()
+    ctx.arc(lado / 2 + Math.cos(angulo) * r, lado / 2 + Math.sin(angulo) * r, 1.5 + azar() * 3, 0, Math.PI * 2)
+    ctx.fill()
+  }
   return new THREE.CanvasTexture(lienzo)
 }
