@@ -38,14 +38,35 @@ function crearSuperficie() {
       indices.push(a, b, c, b, d, c)
     }
   }
-  return unirCaras(posiciones, indices)
+  return pintarPorPendiente(unirCaras(posiciones, indices))
+}
+
+// Color por cara según su pendiente: las caras empinadas (paredes de la colina, la pared de la cascada)
+// son roca y las tendidas, hierba, como en la referencia. Con flatShading cada cara tiene su normal
+// y sus tres vértices propios, así que el color también queda facetado
+const HIERBA = new THREE.Color(PALETA.meseta)
+const ROCA = new THREE.Color(PALETA.roca)
+function pintarPorPendiente(geometria) {
+  const normales = geometria.attributes.normal
+  const colores = new Float32Array(normales.count * 3)
+  const color = new THREE.Color()
+  for (let i = 0; i < normales.count; i += 3) {
+    // normal.y = coseno de la inclinación: 1 en llano, 0 en vertical. Roca por debajo de ~57°
+    const y = (normales.getY(i) + normales.getY(i + 1) + normales.getY(i + 2)) / 3
+    color.lerpColors(ROCA, HIERBA, THREE.MathUtils.smoothstep(y, 0.5, 0.62))
+    for (let v = 0; v < 3; v++) color.toArray(colores, (i + v) * 3)
+  }
+  geometria.setAttribute('color', new THREE.Float32BufferAttribute(colores, 3))
+  return geometria
 }
 
 function crearMasa() {
   const posiciones = []
   const indices = []
-  const paso = 4 // la masa no necesita tanto detalle como la superficie
-  const lados = SECTORES / paso
+  // Mismos sectores que la superficie: su borde superior coincide vértice a vértice con el del terreno.
+  // Con 1 de cada 4 (antes) quedaban huecos de hasta 3,8 m detrás de la colina, donde el borde cambia
+  // de altura bruscamente. Cuesta ~2.200 triángulos más
+  const lados = SECTORES
   const bordeSuperior = (sector) => {
     const [x, z] = puntoDelContorno((sector / lados) * Math.PI * 2)
     return [x, alturaDelTerreno(x, z), z]
@@ -53,9 +74,10 @@ function crearMasa() {
   for (let sector = 0; sector < lados; sector++) posiciones.push(...bordeSuperior(sector))
   PERFIL_MASA.forEach(([fraccion, y]) => {
     for (let sector = 0; sector < lados; sector++) {
-      const irregular = 1 + 0.06 * Math.sin(sector * 1.7 + y)
+      const ondas = sector / 4 // misma irregularidad que con 50 lados: ondas suaves, no dientes
+      const irregular = 1 + 0.06 * Math.sin(ondas * 1.7 + y)
       const [x, z] = puntoDelContorno((sector / lados) * Math.PI * 2, fraccion * irregular)
-      posiciones.push(x, y + 0.5 * Math.sin(sector * 2.3), z)
+      posiciones.push(x, y + 0.5 * Math.sin(ondas * 2.3), z)
     }
   })
   for (let fila = 0; fila < PERFIL_MASA.length; fila++) {
@@ -83,7 +105,8 @@ export function Isla() {
   return (
     <group name="isla">
       <mesh geometry={superficie} castShadow receiveShadow>
-        <meshStandardMaterial color={PALETA.meseta} flatShading roughness={1} />
+        {/* El color viene de cada cara (vertexColors): hierba en lo llano y roca en lo empinado */}
+        <meshStandardMaterial vertexColors flatShading roughness={1} />
       </mesh>
       <mesh geometry={masa}>
         <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
