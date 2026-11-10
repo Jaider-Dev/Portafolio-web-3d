@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { MUNDO } from '../../data/mundo.js'
@@ -6,6 +6,8 @@ import { useExperiencia } from '../../store/useExperiencia'
 import { useHora } from '../../store/hora'
 import { AMBIENTES, DURACION_CAMBIO, PALETA } from '../paleta'
 import { transicionHora } from './transicion'
+import { cuantos } from '../../utils/calidad.js'
+import { useCalidad } from '../useCalidad'
 
 const RADIO_CIELO = 450 // la bóveda sigue a la cámara: siempre dentro de su far (600)
 const { manana: M, noche: N } = AMBIENTES
@@ -78,9 +80,26 @@ export function Ambiente() {
   const estrellas = useRef()
   const boveda = useRef()
   const [objetivo] = useState(() => new THREE.Object3D())
-  // Calidad "baja" apaga las sombras; "media" usa un mapa de 1024 y el resto, 2048 (HU-17 la ajustará)
-  const calidad = useExperiencia((s) => s.ajustes.calidad)
-  const resolucion = calidad === 'media' ? 1024 : 2048
+  // Calidad (HU-17, 06 §19.1): mapa de sombras de 2048 en alta, 1024 en media y sin sombra en baja;
+  // estrellas según la proporción de partículas
+  const { perfil } = useCalidad()
+  const conSombras = perfil.sombras > 0
+  const resolucion = perfil.sombras || 1024
+
+  // Al cambiar el tamaño del mapa de sombras hay que liberar el anterior: three solo crea el render
+  // target la primera vez y no lo redimensiona
+  useEffect(() => {
+    const luz = sol.current
+    if (luz.shadow.map) {
+      luz.shadow.map.dispose()
+      luz.shadow.map = null
+    }
+  }, [resolucion])
+
+  useEffect(() => {
+    const geometria = estrellas.current.geometry
+    geometria.setDrawRange(0, cuantos(geometria.attributes.position.count, perfil.particulas))
+  }, [perfil.particulas])
 
   const datos = useMemo(() => ({
     materialCielo: new THREE.ShaderMaterial({
@@ -167,7 +186,7 @@ export function Ambiente() {
         position={M.luz.posicion}
         color={M.luz.color}
         intensity={M.luz.intensidad}
-        castShadow={calidad !== 'baja'}
+        castShadow={conSombras}
         shadow-mapSize={[resolucion, resolucion]}
         shadow-camera-left={-34}
         shadow-camera-right={34}

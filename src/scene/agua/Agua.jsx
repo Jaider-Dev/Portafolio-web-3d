@@ -6,6 +6,8 @@ import { ARROYO, CAUCE, MUNDO } from '../../data/mundo.js'
 import { useExperiencia } from '../../store/useExperiencia'
 import { useHora } from '../../store/hora'
 import { PALETA } from '../paleta'
+import { cuantos } from '../../utils/calidad.js'
+import { useCalidad } from '../useCalidad'
 import { crearDegradado, crearEspumaRadial, crearTexturaDeFlujo } from './texturas'
 
 const ARRIBA = new THREE.Vector3(0, 1, 0)
@@ -151,12 +153,13 @@ function MaterialDeAgua({ mapa, alphaMap, opacidad = 0.88 }) {
 }
 
 // Bruma y espuma de partículas en la base de las cascadas (05 §8). De noche, más tenue
-function Bruma(props) {
+function Bruma({ count = 40, ...props }) {
   const noche = useHora((s) => s.hora === 'noche')
   const reducir = useExperiencia((s) => s.ajustes.reducirMovimiento)
+  const { perfil } = useCalidad() // menos partículas en calidad media y baja (06 §19.1)
   return (
     <Sparkles
-      count={40}
+      count={cuantos(count, perfil.particulas)}
       size={6}
       speed={reducir ? 0 : 0.5}
       opacity={noche ? 0.35 : 0.8}
