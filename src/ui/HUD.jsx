@@ -4,6 +4,7 @@ import { PERFIL } from '../data/perfil'
 import { TEXTOS } from '../data/textos'
 import { useExperiencia } from '../store/useExperiencia'
 import { rutaClasicaDe } from '../utils/rutas'
+import { BotonHora } from './BotonHora'
 
 const FASES_CON_HUD = ['vuelo', 'explorando', 'panel', 'viajando']
 
@@ -40,10 +41,13 @@ export function HUD() {
         >
           <strong>{PERFIL.nombre}</strong> · {PERFIL.rol}
         </button>
-        <Link className="boton hud-clasico" to={rutaClasicaDe(pathname, panel)} aria-label={TEXTOS.hud.clasicoAccesible}>
-          <span className="solo-ancho">{TEXTOS.hud.clasico}</span>
-          <span className="solo-estrecho">{TEXTOS.hud.clasicoCorto}</span>
-        </Link>
+        <div className="hud-derecha">
+          <BotonHora className="hud-hora" />
+          <Link className="boton hud-clasico" to={rutaClasicaDe(pathname, panel)} aria-label={TEXTOS.hud.clasicoAccesible}>
+            <span className="solo-ancho">{TEXTOS.hud.clasico}</span>
+            <span className="solo-estrecho">{TEXTOS.hud.clasicoCorto}</span>
+          </Link>
+        </div>
       </div>
       <div className="hud-abajo">
         <button type="button" className="boton" onClick={() => alternarMenu(true)}>

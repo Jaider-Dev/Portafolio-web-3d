@@ -1,18 +1,38 @@
-/* Tokens neutros y fuente del sistema: la paleta (P-1, PL-05) y las tipografías (PL-04) siguen pendientes */
+/* Tema de la interfaz según la hora de la isla (D12, HU-37), derivado de la paleta elegida (PL-05):
+   mañana = papel dorado del horizonte; noche = azul violáceo. El énfasis es el ámbar del fuego.
+   Contraste (WCAG): texto ≥ 14:1, texto suave ≥ 7,5:1, bordes ≥ 3,6:1, texto sobre énfasis ≥ 8:1.
+   Las tipografías siguen pendientes (PL-04) */
 :root {
-  --fondo: #141414;
-  --superficie: #1f1f1f;
-  --borde: #6e6e6e;
-  --texto: #f2f2f2;
-  --texto-suave: #cfcfcf;
-  --enfasis: #f2f2f2;
-  --enfasis-texto: #141414;
+  --fondo: #110e24;
+  --superficie: #1c1838;
+  --superficie-hover: #2a2452;
+  --borde: #7a70b0;
+  --texto: #f1eefc;
+  --texto-suave: #c9c2e6;
+  --enfasis: #f4af36;
+  --enfasis-hover: #f7c25e;
+  --enfasis-borde: #f4af36;
+  --enfasis-texto: #1c1838;
   --velocidad: 200ms;
+  color-scheme: dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color: var(--texto);
   background: var(--fondo);
+}
+
+:root[data-hora='manana'] {
+  --fondo: #f7f0e1;
+  --superficie: #fffaf0;
+  --superficie-hover: #f1e6cf;
+  --borde: #8a7a5c;
+  --texto: #2b2418;
+  --texto-suave: #5b5040;
+  --enfasis-hover: #e09a1f;
+  --enfasis-borde: #9a6412; /* el ámbar solo no llega a 3:1 sobre el papel */
+  --enfasis-texto: #2b2418;
+  color-scheme: light;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -60,15 +80,15 @@ a { color: inherit; }
   cursor: pointer;
 }
 
-.boton:hover:not(:disabled):not([aria-disabled='true']) { background: #383838; }
+.boton:hover:not(:disabled):not([aria-disabled='true']) { background: var(--superficie-hover); }
 
 .boton-principal {
   color: var(--enfasis-texto);
   background: var(--enfasis);
-  border-color: var(--enfasis);
+  border-color: var(--enfasis-borde);
 }
 
-.boton-principal:hover:not(:disabled) { background: #d6d6d6; }
+.boton-principal:hover:not(:disabled) { background: var(--enfasis-hover); }
 .boton:disabled, .boton-pendiente { color: var(--texto-suave); border-style: dashed; cursor: not-allowed; }
 .boton-principal:disabled { background: var(--superficie); border-color: var(--borde); }
 

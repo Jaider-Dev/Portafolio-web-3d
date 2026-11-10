@@ -4,7 +4,7 @@ Portafolio profesional con forma de isla flotante que se recorre. Proyecto del c
 
 - **Demo:** <https://portafolio-web-3d.vercel.app> (versión clásica en [/clasico](https://portafolio-web-3d.vercel.app/clasico)). Cada *push* a `main` se despliega en Vercel.
 - **Repositorio:** <https://github.com/Jaider-Dev/Portafolio-web-3d>
-- **Estado:** *sprint* 1, "La isla existe": *blockout* navegable en modo panorámico, primeros modelos GLB, carga e intro, Sobre mí, contacto, menú de viaje y versión clásica en 2D. El nombre y el rol ya son los reales; el resto del contenido personal sigue con marcadores (`{RESUMEN}`, `{CORREO}`…) y la escena usa grises neutros porque la paleta aún no está decidida.
+- **Estado:** *sprint* 2 en curso, "La isla respira". Del *sprint* 1: *blockout* navegable en modo panorámico, primeros modelos GLB, carga e intro, Sobre mí, contacto, menú de viaje y versión clásica en 2D. Del *sprint* 2: paleta de la imagen de referencia (`src/scene/paleta.js`) y dos horas del día, **mañana y noche** (botón ☀/☾, `src/scene/ambiente/Ambiente.jsx`), con el tema de la interfaz a juego. Nombre, rol, correo, LinkedIn y GitHub ya son los reales; el resto del contenido personal sigue con marcadores (`{RESUMEN}`, `{URL_CV}`…).
 
 ## Instalación y ejecución
 

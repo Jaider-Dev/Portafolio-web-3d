@@ -8,7 +8,7 @@ import { TEXTOS } from '../../data/textos'
 import { useExperiencia } from '../../store/useExperiencia'
 import { esMarcador } from '../../utils/marcadores'
 import { rutaClasicaDe } from '../../utils/rutas'
-import { GRISES } from '../grises'
+import { PALETA } from '../paleta'
 
 // Inter Bold convertida con scripts/generar-fuente-3d.mjs: Helvetiker no trae tildes. Provisional hasta PL-04
 const FUENTE_3D = '/fonts/inter-700.typeface.json'
@@ -23,17 +23,17 @@ export function Letrero() {
       {[-1.35, 1.35].map((x) => (
         <mesh key={x} position={[x, 0.75, 0]}>
           <cylinderGeometry args={[0.08, 0.1, 1.5, 6]} />
-          <meshStandardMaterial color={GRISES.madera} flatShading />
+          <meshStandardMaterial color={PALETA.madera} flatShading />
         </mesh>
       ))}
       <mesh position={[0, 1.35, 0]}>
         <boxGeometry args={[3.2, 0.9, 0.12]} />
-        <meshStandardMaterial color={GRISES.madera} flatShading />
+        <meshStandardMaterial color={PALETA.madera} flatShading />
       </mesh>
       <Center position={[0, 1.35, 0.1]}>
         <Text3D font={FUENTE_3D} size={tamano} height={0.08} curveSegments={4} bevelEnabled bevelSize={0.012} bevelThickness={0.012} bevelSegments={2}>
           {PERFIL.nombre}
-          <meshStandardMaterial color={GRISES.realce} />
+          <meshStandardMaterial color={PALETA.realce} />
         </Text3D>
       </Center>
     </group>
@@ -60,15 +60,15 @@ function Flecha({ etiqueta, altura, giro, alActivar }) {
       >
         <mesh position={[0.65, 0, 0]}>
           <boxGeometry args={[1.1, 0.26, 0.08]} />
-          <meshStandardMaterial color={encima ? GRISES.realce : GRISES.madera} flatShading />
+          <meshStandardMaterial color={encima ? PALETA.realce : PALETA.madera} flatShading />
         </mesh>
         <mesh position={[1.3, 0, 0]} rotation-z={-Math.PI / 2}>
           <coneGeometry args={[0.22, 0.34, 4]} />
-          <meshStandardMaterial color={encima ? GRISES.realce : GRISES.madera} flatShading />
+          <meshStandardMaterial color={encima ? PALETA.realce : PALETA.madera} flatShading />
         </mesh>
       </group>
       {encima && (
-        <Text font={FUENTE_2D} position={[0.8, 0.34, 0]} fontSize={0.26} color={GRISES.letrero} anchorX="center" outlineWidth={0.018} outlineColor={GRISES.realce}>
+        <Text font={FUENTE_2D} position={[0.8, 0.34, 0]} fontSize={0.26} color={PALETA.letrero} anchorX="center" outlineWidth={0.018} outlineColor={PALETA.realce}>
           {etiqueta}
         </Text>
       )}
@@ -101,7 +101,7 @@ export function Poste() {
     <group position={MUNDO.poste} name="poste">
       <mesh position={[0, 1.4, 0]}>
         <cylinderGeometry args={[0.09, 0.11, 2.8, 6]} />
-        <meshStandardMaterial color={GRISES.madera} flatShading />
+        <meshStandardMaterial color={PALETA.madera} flatShading />
       </mesh>
       {flechas.map((flecha, i) => <Flecha key={flecha.etiqueta} {...flecha} altura={2.5 - i * 0.48} />)}
     </group>
