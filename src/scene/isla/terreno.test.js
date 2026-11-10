@@ -14,7 +14,7 @@ const TABLA_02 = {
   letrero: [MUNDO.letrero, [-11, 0, 10]],
   'menhir M1': [LUGARES_POR_ID.campamento.menhir, [-10, 0, 2]],
   'menhir M2': [LUGARES_POR_ID.rio.menhir, [4, 0, 4]],
-  'centro de la poza': [MUNDO.poza.centro, [3, -0.5, -13]],
+  'centro de la poza': [MUNDO.poza.centro, [3, -0.3, -13]],
   'borde de la cascada alta': [MUNDO.cascadaAlta.borde, [4, 12, -17]],
   'entrada de la cueva': [MUNDO.entradaCueva, [4, 0.2, -18.5]],
   'centro de la galería': [MUNDO.galeria.centro, [4, 1, -25]],

@@ -1,16 +1,16 @@
+import { useMemo } from 'react'
 import { Clone, Instance, Instances, useGLTF } from '@react-three/drei'
-import * as THREE from 'three'
 import { LUGARES } from '../../data/lugares.js'
-import { MUNDO, SENDERO } from '../../data/mundo.js'
+import { MUNDO } from '../../data/mundo.js'
 import { PALETA } from '../paleta'
-import { alturaDelTerreno } from '../isla/terreno.js'
+import { alturaDelTerreno, SENDERO_DENSO } from '../isla/terreno.js'
 import { FuegoVivo } from './Fogata'
 
 const RUTAS = {
   tienda: '/models/tienda.glb',
   fogata: '/models/fogata.glb',
   puente: '/models/puente.glb',
-  menhir: '/models/menhir.glb',
+
 }
 
 // Los GLB provisionales salen en gris; al cargarlos, cada material toma su color de la paleta por su
@@ -22,6 +22,13 @@ const COLOR_POR_MATERIAL = {
   brasa: PALETA.fuego,
   sombra: PALETA.sombra,
 }
+
+// Una roca facetada con proporciones y giro propios a partir de una semilla (determinista)
+const roca = (posicion, radio, aplastada = 1, semilla = posicion[0] * 7 + posicion[2]) => ({
+  posicion,
+  escala: [radio * (1 + 0.15 * Math.sin(semilla)), radio * aplastada, radio * (1 - 0.15 * Math.cos(semilla))],
+  rotacion: [Math.sin(semilla * 1.3) * 0.5, semilla, Math.cos(semilla * 0.7) * 0.4],
+})
 
 const pintados = new WeakSet()
 
@@ -47,13 +54,50 @@ function Modelo({ ruta, ...props }) {
   return <Clone object={scene} castShadow {...props} />
 }
 
-export function Menhires() {
-  const scene = usePintado(RUTAS.menhir)
+// Menhires (02 §7): piedras hincadas irregulares y algo inclinadas, con piedras pequeñas en la base.
+// Antes eran obeliscos tallados (cilindro + punta) y parecían torres
+function Menhir({ posicion, semilla }) {
+  const azar = useMemo(() => generador(semilla), [semilla])
+  const [x, , z] = posicion
+  const y = alturaDelTerreno(x, z)
+  const base = useMemo(() => Array.from({ length: 3 }, (_, i) => {
+    const a = (i / 3) * Math.PI * 2 + azar() * 1.5
+    return roca([x + Math.cos(a) * 0.6, y + 0.05, z + Math.sin(a) * 0.6], 0.22 + azar() * 0.12, 0.6, semilla + i)
+  }), [azar, x, y, z, semilla])
   return (
-    <group name="menhires">
-      {LUGARES.map((lugar) => <Clone key={lugar.id} object={scene} castShadow name={`menhir-${lugar.id}`} position={lugar.menhir} />)}
+    <group name="menhir">
+      <mesh position={[x, y + 1.05, z]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color={PALETA.piedra} flatShading roughness={1} />
+      </mesh>
+      <Rocas piedras={base} color={PALETA.piedra} />
     </group>
   )
+}
+
+export function Menhires() {
+  return (
+    <group name="menhires">
+      {LUGARES.map((lugar, i) => <Menhir key={lugar.id} posicion={lugar.menhir} semilla={3 + i * 11} />)}
+    </group>
+  )
+}
+
+// Rocas que integran la cascada alta en la montaña (02 Z4): en el labio, a los dos lados de la caída y
+// al pie, donde la cortina entra en la poza. Dejan libre la repisa (x 0–4, z -17) y la puerta de la cueva
+const ROCAS_CASCADA = [
+  // labio: el arroyo sale entre dos rocas
+  roca([2.5, 12.4, -17.3], 1.0), roca([5.6, 12.5, -17.35], 1.1), roca([2.9, 11.3, -17.05], 0.7), roca([5.2, 11.2, -17.1], 0.75),
+  // costados de la caída, como una pared escalonada
+  roca([1.9, 9.2, -17.35], 0.9, 0.8), roca([6.1, 8.8, -17.4], 0.95, 0.8), roca([1.7, 6.6, -17.4], 0.8, 0.9),
+  roca([6.3, 6.2, -17.45], 0.85, 0.9), roca([1.8, 4.3, -17.4], 0.7), roca([6.2, 4, -17.45], 0.75),
+  // pie: rocas en la orilla de la poza, a la derecha y en el extremo izquierdo
+  roca([6.4, 0.1, -15.8], 0.9, 0.7), roca([7.1, 0.05, -14.4], 0.6, 0.7), roca([5.9, 0.3, -16.9], 0.7, 0.8),
+  roca([-0.7, 0.1, -16.5], 0.7, 0.75), roca([-1.2, 0.05, -15.3], 0.5, 0.7),
+]
+
+export function RocasCascada() {
+  return <Rocas nombre="rocas-cascada" piedras={ROCAS_CASCADA} />
 }
 
 export function Campamento() {
@@ -109,44 +153,76 @@ export function Vado() {
   )
 }
 
-// Reparte peldaños a lo largo de la polilínea del sendero, siguiendo el terreno
-function puntosDelSendero(separacion = 1.1) {
-  const curva = new THREE.CatmullRomCurve3(SENDERO.map(([x, z]) => new THREE.Vector3(x, 0, z)))
-  const cantidad = Math.round(curva.getLength() / separacion)
-  return Array.from({ length: cantidad + 1 }, (_, i) => {
-    const punto = curva.getPointAt(i / cantidad)
-    const tangente = curva.getTangentAt(i / cantidad)
-    return {
-      posicion: [punto.x, alturaDelTerreno(punto.x, punto.z) + 0.1, punto.z],
-      giro: Math.atan2(tangente.x, tangente.z),
-    }
-  })
+// Pseudoaleatorio con semilla: las piedras quedan igual en cada visita
+function generador(semilla) {
+  let s = semilla
+  return () => ((s = (s * 16807) % 2147483647) / 2147483647)
+}
+
+// Piedras del sendero (02 Z6): el camino de tierra está pintado en el terreno (isla/Isla.jsx); aquí solo
+// van losas planas e irregulares, medio hundidas, donde la cuesta lo pide (≥ 0,35 m de subida por metro)
+function piedrasDelSendero() {
+  const azar = generador(29)
+  const piedras = []
+  let recorrido = 0
+  for (let i = 1; i < SENDERO_DENSO.length; i++) {
+    const [x0, z0] = SENDERO_DENSO[i - 1]
+    const [x, z] = SENDERO_DENSO[i]
+    const paso = Math.hypot(x - x0, z - z0)
+    recorrido += paso
+    const pendiente = Math.abs(alturaDelTerreno(x, z) - alturaDelTerreno(x0, z0)) / paso
+    if (recorrido < 1.15 || pendiente < 0.35) continue
+    recorrido = 0
+    const giro = Math.atan2(x - x0, z - z0)
+    const lado = (azar() - 0.5) * 0.5 // no todas en el centro del camino
+    const px = x + Math.cos(giro) * lado
+    const pz = z - Math.sin(giro) * lado
+    piedras.push({
+      posicion: [px, alturaDelTerreno(px, pz) + 0.02, pz],
+      rotacion: [(azar() - 0.5) * 0.15, giro + (azar() - 0.5) * 0.6, (azar() - 0.5) * 0.15],
+      escala: [0.55 + azar() * 0.25, 0.14 + azar() * 0.06, 0.4 + azar() * 0.15],
+    })
+  }
+  return piedras
 }
 
 export function Sendero() {
-  const peldanos = puntosDelSendero()
+  const piedras = useMemo(() => piedrasDelSendero(), [])
   return (
     <group name="sendero">
-      <Instances limit={peldanos.length} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 0.3, 0.95]} />
-        <meshStandardMaterial color={PALETA.sendero} flatShading />
-        {peldanos.map(({ posicion, giro }) => <Instance key={posicion.join()} position={posicion} rotation-y={giro} />)}
+      <Instances limit={piedras.length} castShadow receiveShadow>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color={PALETA.piedra} flatShading roughness={1} />
+        {piedras.map(({ posicion, rotacion, escala }) => <Instance key={posicion.join()} position={posicion} rotation={rotacion} scale={escala} />)}
       </Instances>
     </group>
   )
 }
 
+// Afloramiento de rocas: varias piedras facetadas apoyadas en el terreno alrededor de un punto
+function Rocas({ piedras, nombre, color = PALETA.roca }) {
+  return (
+    <Instances limit={piedras.length} castShadow receiveShadow name={nombre}>
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshStandardMaterial color={color} flatShading roughness={1} />
+      {piedras.map(({ posicion, escala, rotacion }) => <Instance key={posicion.join()} position={posicion} scale={escala} rotation={rotacion} />)}
+    </Instances>
+  )
+}
+
+
+// Cima: el mirador es un afloramiento de losas (antes, un cilindro) y el manantial, una roca
 export function Cima() {
+  const [mx, my, mz] = MUNDO.mirador
+  const losas = [
+    roca([mx, my + 0.05, mz], 1.6, 0.22), roca([mx + 1.1, my + 0.15, mz - 0.6], 0.9, 0.3),
+    roca([mx - 1.2, my + 0.1, mz + 0.5], 0.8, 0.28), roca([mx + 0.3, my + 0.12, mz + 1.2], 0.7, 0.25),
+  ]
+  const [fx, fy, fz] = MUNDO.manantial
   return (
     <group name="cima">
-      <mesh castShadow position={[MUNDO.mirador[0], MUNDO.mirador[1] + 0.2, MUNDO.mirador[2]]}>
-        <cylinderGeometry args={[1.8, 2.1, 0.5, 8]} />
-        <meshStandardMaterial color={PALETA.piedra} flatShading />
-      </mesh>
-      <mesh castShadow position={[MUNDO.manantial[0], MUNDO.manantial[1] + 0.2, MUNDO.manantial[2]]}>
-        <dodecahedronGeometry args={[0.9]} />
-        <meshStandardMaterial color={PALETA.piedra} flatShading />
-      </mesh>
+      <Rocas nombre="mirador" piedras={losas} color={PALETA.piedra} />
+      <Rocas nombre="manantial" piedras={[roca([fx, fy + 0.3, fz], 0.9, 0.8), roca([fx + 0.9, fy + 0.1, fz + 0.4], 0.5, 0.7), roca([fx - 0.8, fy + 0.1, fz - 0.3], 0.45, 0.7)]} />
     </group>
   )
 }
@@ -154,4 +230,4 @@ export function Cima() {
 useGLTF.preload(RUTAS.tienda)
 useGLTF.preload(RUTAS.fogata)
 useGLTF.preload(RUTAS.puente)
-useGLTF.preload(RUTAS.menhir)
+

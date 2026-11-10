@@ -8,7 +8,7 @@ export const MUNDO = {
   poste: [-9, 0, 9],
   letrero: [-11, 0, 10],
   vado: { desde: -2, hasta: 2, y: -0.1, z: 8, piedras: 5 },
-  poza: { centro: [3, -0.5, -13], radio: 3.4 },
+  poza: { centro: [3, -0.3, -13], radio: 3.4 }, // a la altura del río: el agua de la poza sigue en él
   cascadaAlta: { borde: [4, 12, -17], ancho: 3 },
   repisa: { desde: 0, hasta: 4, y: 0, z: -17 },
   entradaCueva: [4, 0.2, -18.5],

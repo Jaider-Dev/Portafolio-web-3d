@@ -66,15 +66,36 @@ const VELOCIDAD = { rio: 1.4, arroyo: 2.2, poza: 0.35 }
 
 // Cascada alta: continúa el arroyo desde su final, se curva sobre el labio, cae delante de la pared
 // (cortina de la cueva, 06 §9.3) y entra en la poza
-const RECORRIDO_ALTA = [ARROYO[1], [3.8, 11.75, -16.7], [3.75, 10.5, -16.55], [3.7, 6, -16.45], [3.6, 1.5, -16.3], [3.4, -0.2, -15.6], [3.2, -0.42, -14.5]]
+const RECORRIDO_ALTA = [ARROYO[1], [3.8, 11.75, -16.7], [3.75, 10.5, -16.55], [3.7, 6, -16.45], [3.6, 1.5, -16.3], [3.4, 0, -15.6], [3.2, -0.22, -14.5]]
 // Cascada baja: continúa el río desde su final, se curva sobre el borde y cae hacia las nubes
 const RECORRIDO_BAJA = [SALIDA_DEL_BORDE, [-4.95, -0.9, 24.5], [-5.05, -3, 25.1], [-5.2, -12, 25.9], [-5.4, -26, 26.6]]
-const IMPACTO_ALTA = [3.25, -0.44, -14.7]
+const IMPACTO_ALTA = [3.25, -0.24, -14.7]
 
 // Lateral que gira suavemente desde el de la corriente que llega hasta `final` en el primer tramo:
 // así el borde de la cascada coincide con el de su arroyo o río y después cae de frente
 const lateralQueGira = (inicial, final, tramo = 0.25) => (t) =>
   new THREE.Vector3().lerpVectors(inicial, final, THREE.MathUtils.smoothstep(t, 0, tramo))
+
+// Poza de contorno irregular (no un círculo perfecto), en abanico desde el centro. Las UV van de 0 a 1
+// sobre su diámetro, como las de un círculo, para que la textura se repita igual
+function crearPoza(radio, lados = 40) {
+  const posiciones = [0, 0, 0]
+  const uvs = [0.5, 0.5]
+  const indices = []
+  for (let i = 0; i < lados; i++) {
+    const a = (i / lados) * Math.PI * 2
+    const r = radio * (1 + 0.07 * Math.sin(a * 3 + 0.6) + 0.04 * Math.sin(a * 7 + 2.1))
+    posiciones.push(Math.cos(a) * r, Math.sin(a) * r, 0)
+    uvs.push(0.5 + (Math.cos(a) * r) / (2 * radio), 0.5 + (Math.sin(a) * r) / (2 * radio))
+    indices.push(0, 1 + i, 1 + ((i + 1) % lados))
+  }
+  const geometria = new THREE.BufferGeometry()
+  geometria.setAttribute('position', new THREE.Float32BufferAttribute(posiciones, 3))
+  geometria.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  geometria.setIndex(indices)
+  geometria.computeVertexNormals()
+  return geometria
+}
 
 function crearAgua() {
   const conOrillas = crearTexturaDeFlujo({ orillas: true })
@@ -187,7 +208,8 @@ function EspumaDeImpacto({ textura }) {
 
 export function Agua() {
   const { rio, arroyo, poza, alta, baja, desvanecer, espuma } = useCorrientes()
-  const { centro, radio } = MUNDO.poza
+  const { centro } = MUNDO.poza
+  const pozaOrganica = useMemo(() => crearPoza(MUNDO.poza.radio), [])
 
   return (
     <group name="agua">
@@ -199,7 +221,7 @@ export function Agua() {
       </mesh>
       {/* Poza poco profunda: más transparente y casi quieta (se puede cruzar caminando, sprint 4) */}
       <mesh position={centro} rotation-x={-Math.PI / 2} receiveShadow name="poza">
-        <circleGeometry args={[radio, 24]} />
+        <primitive object={pozaOrganica} attach="geometry" />
         <MaterialDeAgua mapa={poza.mapa} opacidad={0.72} />
       </mesh>
       <mesh geometry={alta.geometria} name="cascada-alta">
