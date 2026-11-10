@@ -10,7 +10,8 @@ import { esMarcador } from '../../utils/marcadores'
 import { rutaClasicaDe } from '../../utils/rutas'
 import { GRISES } from '../grises'
 
-const FUENTE_3D = '/fonts/helvetiker_regular.typeface.json' // provisional hasta PL-04
+// Inter Bold convertida con scripts/generar-fuente-3d.mjs: Helvetiker no trae tildes. Provisional hasta PL-04
+const FUENTE_3D = '/fonts/inter-700.typeface.json'
 const FUENTE_2D = '/fonts/inter-latin-400-normal.woff' // provisional hasta PL-04
 
 // Letrero con el nombre, en texto 3D (HU-09). Ajustes de 06 §17 para no gastar triángulos
