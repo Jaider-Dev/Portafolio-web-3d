@@ -4,6 +4,7 @@ import { LUGARES } from '../../data/lugares.js'
 import { MUNDO, SENDERO } from '../../data/mundo.js'
 import { PALETA } from '../paleta'
 import { alturaDelTerreno } from '../isla/terreno.js'
+import { FuegoVivo } from './Fogata'
 
 const RUTAS = {
   tienda: '/models/tienda.glb',
@@ -64,6 +65,7 @@ export function Campamento() {
     <group name="campamento">
       <Modelo ruta={RUTAS.tienda} position={MUNDO.tienda} rotation-y={haciaFogata} />
       <Modelo ruta={RUTAS.fogata} position={MUNDO.fogata} />
+      <FuegoVivo position={MUNDO.fogata} />
       {Array.from({ length: cantidad }, (_, i) => {
         const angulo = Math.PI / 4 + (i / cantidad) * Math.PI * 2
         return (
