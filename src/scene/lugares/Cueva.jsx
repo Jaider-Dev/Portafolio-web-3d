@@ -7,16 +7,16 @@ import { useExperiencia } from '../../store/useExperiencia'
 import { alturaDelTerreno } from '../isla/terreno.js'
 import { PALETA } from '../paleta'
 import { useCalidad } from '../useCalidad'
+import { GALERIA, PUERTA, puntoEnLaPared } from './galeria'
+import { Murales } from './Murales'
 
 // Cueva de los murales (02 Z5, 06 §11): fachada de roca con una puerta en arco detrás de la cascada,
 // una antesala corta y una galería en cúpula con antorchas, cristales y estalactitas. Preparada para
 // entrar caminando (sprint 4): el suelo es llano y la única abertura es la puerta tras la cortina.
 // Desde dentro, por la puerta, se ve caer la cascada (su malla es de doble cara)
 
-const PUERTA = { x: 4, ancho: 3, alto: 3 } // centro, ancho y altura máxima del arco
 const FACHADA = { x: [0.8, 7.2], z: -17.85 }
 const ANTESALA = { z: [-17.7, -19.7] }
-const GALERIA = { centro: [4, 0, -24.3], radios: [7, 4.6, 5.6] }
 
 // Ruido suave y determinista para que la roca no sea lisa
 const ruido = (a, b) => 0.5 * Math.sin(a * 2.1 + b * 0.7) + 0.5 * Math.sin(b * 1.3 - a * 0.9 + 1.7)
@@ -115,13 +115,14 @@ const ROCAS_PORTAL = [
 
 // Antorchas en la pared de la galería (ángulo en la elipse: 0 = +x, -π/2 = fondo). El fondo queda libre
 // para el mural destacado; las tres marcadas con luz son las que reciben una luz puntual real
-const ANTORCHAS = [0.18, -0.22, -0.4, -0.6, -0.78, 0.82].map((fraccion, i) => {
-  const a = fraccion * Math.PI
-  const [cx, , cz] = GALERIA.centro
-  const [rx, , rz] = GALERIA.radios
-  return { posicion: [cx + Math.cos(a) * rx * 0.86, 1.55, cz + Math.sin(a) * rz * 0.86], indice: i }
-})
-const CON_LUZ = { alta: [1, 3, 4], media: [2], baja: [] } // ≤ 5 luces puntuales en total (06 §19.1)
+// Una antorcha entre cada par de murales (data/proyectos.js); las dos del fondo flanquean el destacado
+const ANTORCHAS = [0.97, -0.815, -0.6, -0.4, -0.185, 0.02].map((angulo, indice) => ({
+  ...puntoEnLaPared(angulo, 0.86, 1.55),
+  luz: puntoEnLaPared(angulo, 0.74, 1.9).posicion, // la luz, algo hacia dentro: ilumina los murales vecinos
+  indice,
+}))
+// Luces puntuales reales para las antorchas: ≤ 5 en total con la fogata y el farol (06 §19.1)
+const LUCES_ANTORCHA = { alta: 3, media: 1, baja: 0 }
 
 // Estalactitas repartidas por el techo, con una semilla fija
 const ESTALACTITAS = (() => {
@@ -164,23 +165,16 @@ const CRISTALES = [
   { posicion: [1.2, 0, -28.6], giro: 2.2 }, { posicion: [7.4, 0, -28.4], giro: 0.9 },
 ]
 
-function Antorcha({ posicion, indice, conLuz }) {
+// Antorcha: palo y llama emisiva, siempre visibles (la luz real la pone LucesDeAntorchas)
+function Antorcha({ posicion, giro, indice }) {
   const llama = useRef()
-  const luz = useRef()
-  useFrame(({ clock, camera }, delta) => {
+  useFrame(({ clock }) => {
     const s = clock.elapsedTime + indice * 1.7 // desfase por antorcha
     const quieto = useExperiencia.getState().ajustes.reducirMovimiento
     llama.current.scale.y = quieto ? 1 : 1 + 0.15 * Math.sin(s * 6.2) + 0.08 * Math.sin(s * 11.3)
-    if (!luz.current) return
-    // Se encienden al acercarse a la cueva: de 0 a los 14 m a plena luz a los 6 m (06 §11.2)
-    const distancia = camera.position.distanceTo(TMP.set(...GALERIA.centro))
-    const objetivo = 9 * THREE.MathUtils.smoothstep(14 - distancia, 0, 8) * (quieto ? 1 : 1 + 0.1 * Math.sin(s * 7))
-    luz.current.intensity = THREE.MathUtils.damp(luz.current.intensity, objetivo, 4, delta)
   })
-  const [x, , z] = posicion
-  const haciaDentro = Math.atan2(GALERIA.centro[0] - x, GALERIA.centro[2] - z)
   return (
-    <group position={posicion} rotation-y={haciaDentro} name="antorcha">
+    <group position={posicion} rotation-y={giro} name="antorcha">
       <mesh rotation-x={0.35} position={[0, -0.35, -0.12]} castShadow>
         <cylinderGeometry args={[0.05, 0.035, 0.8, 5]} />
         <meshStandardMaterial color={PALETA.madera} flatShading />
@@ -189,16 +183,58 @@ function Antorcha({ posicion, indice, conLuz }) {
         <coneGeometry args={[0.1, 0.32, 5]} />
         <meshBasicMaterial color={PALETA.fuego} toneMapped={false} />
       </mesh>
-      {conLuz && <pointLight ref={luz} color={PALETA.fuego} intensity={0} distance={7} decay={2} position={[0, 0.3, 0.3]} />}
     </group>
   )
 }
-const TMP = new THREE.Vector3()
+
+// Las N luces reales se reparten cada 0,25 s entre las antorchas más cercanas a la cámara (06 §11.2):
+// al girar o avanzar por la galería, las antorchas "revelan" los murales que tienes cerca. Una luz que
+// cambia de antorcha vuelve a encenderse desde 0, sin saltos. Todas se apagan lejos de la cueva
+const CENTRO = new THREE.Vector3(...GALERIA.centro)
+function LucesDeAntorchas({ cantidad }) {
+  const luces = useRef([])
+  const asignadas = useRef([])
+  const espera = useRef(0)
+  const punto = useMemo(() => new THREE.Vector3(), [])
+
+  useFrame(({ clock, camera }, delta) => {
+    espera.current -= delta
+    if (espera.current <= 0) {
+      espera.current = 0.25
+      const cercanas = ANTORCHAS
+        .map(({ luz, indice }) => [indice, camera.position.distanceToSquared(punto.set(...luz))])
+        .sort((a, b) => a[1] - b[1])
+        .slice(0, cantidad)
+        .map(([indice]) => indice)
+      // las que ya estaban encendidas conservan su luz; las nuevas toman las luces libres
+      const libres = luces.current.map((_, k) => k).filter((k) => !cercanas.includes(asignadas.current[k]))
+      cercanas.filter((indice) => !asignadas.current.includes(indice)).forEach((indice, n) => {
+        const k = libres[n]
+        if (k === undefined) return
+        asignadas.current[k] = indice
+        luces.current[k].position.set(...ANTORCHAS[indice].luz)
+        luces.current[k].intensity = 0
+      })
+    }
+    // Se encienden al acercarse a la cueva: nada a 14 m del centro, plena luz a 6 m
+    const cerca = THREE.MathUtils.smoothstep(14 - camera.position.distanceTo(CENTRO), 0, 8)
+    const quieto = useExperiencia.getState().ajustes.reducirMovimiento
+    luces.current.forEach((luz, k) => {
+      const s = clock.elapsedTime + (asignadas.current[k] ?? k) * 1.7
+      const objetivo = 9 * cerca * (quieto ? 1 : 1 + 0.1 * Math.sin(s * 7))
+      luz.intensity = THREE.MathUtils.damp(luz.intensity, objetivo, 4, delta)
+    })
+  })
+
+  return Array.from({ length: cantidad }, (_, k) => (
+    <pointLight key={k} ref={(luz) => { luces.current[k] = luz }} color={PALETA.fuego} intensity={0} distance={7} decay={2} />
+  ))
+}
 
 export function Cueva() {
   const geometrias = useMemo(() => ({ fachada: crearFachada(), antesala: crearAntesala(), galeria: crearGaleria(), matcap: crearMatcap() }), [])
   const { nivel } = useCalidad()
-  const conLuz = CON_LUZ[nivel] ?? CON_LUZ.alta
+  const luces = LUCES_ANTORCHA[nivel] ?? LUCES_ANTORCHA.alta
   const [cx, , cz] = GALERIA.centro
 
   return (
@@ -242,7 +278,10 @@ export function Cueva() {
           ))}
         </group>
       ))}
-      {ANTORCHAS.map((antorcha) => <Antorcha key={antorcha.indice} {...antorcha} conLuz={conLuz.includes(antorcha.indice)} />)}
+      {ANTORCHAS.map(({ posicion, giro, indice }) => <Antorcha key={indice} posicion={posicion} giro={giro} indice={indice} />)}
+      {/* key por cantidad: si cambia la calidad se rehacen las luces (y se recompilan los shaders) */}
+      <LucesDeAntorchas key={luces} cantidad={luces} />
+      <Murales />
       {/* Repisa de piedras que se pierde tras la cortina (02 Z4) */}
       {[0, 1, 2, 3, 4].map((i) => (
         <mesh castShadow key={i} position={[MUNDO.repisa.desde + i, MUNDO.repisa.y + 0.08, MUNDO.repisa.z]}>

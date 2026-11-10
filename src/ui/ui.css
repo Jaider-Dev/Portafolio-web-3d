@@ -90,6 +90,7 @@ html:has(.experiencia), body:has(.experiencia) {
 
 .panel { width: min(440px, 100%); }
 .panel h2, .menu-viaje h2 { margin: 0; font-size: 1.375rem; line-height: 1.25; }
+.panel-contenido h3 { margin: 1.25rem 0 0.25rem; font-size: 1.0625rem; }
 .panel-contenido { flex: 1; }
 .panel-contenido p { margin: 0 0 1rem; }
 .panel-contenido ul { margin: 0; padding-left: 1.25rem; }

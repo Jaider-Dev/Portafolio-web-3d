@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ENLACES } from '../../data/enlaces'
 import { PERFIL } from '../../data/perfil'
+import { PROYECTOS } from '../../data/proyectos'
 import { TEXTOS } from '../../data/textos'
 import { useExperiencia } from '../../store/useExperiencia'
 import { OPCIONES } from '../../utils/calidad.js'
 import { esMarcador } from '../../utils/marcadores'
-import { rutaClasicaDe } from '../../utils/rutas'
+import { RUTA_CLASICA, rutaClasicaDe } from '../../utils/rutas'
 import { Panel } from '../Panel'
 
 const T = TEXTOS.contacto
@@ -109,10 +110,41 @@ function Ajustes() {
   )
 }
 
-const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes }
+// Ficha de un proyecto (HU-22): se abre desde su mural. Los mismos apartados que la versión clásica
+function Proyecto() {
+  const panel = useExperiencia((s) => s.panel)
+  const indice = PROYECTOS.findIndex((p) => p.id === panel.id)
+  const proyecto = PROYECTOS[indice]
+  if (!proyecto) return null
+  const C = TEXTOS.clasico.caso
+  const titulo = esMarcador(proyecto.titulo) ? `Proyecto ${indice + 1}` : proyecto.titulo
+  return (
+    <Panel
+      lugar={TEXTOS.murales.lugar}
+      seccion={titulo}
+      acciones={<Link className="boton" to={`${RUTA_CLASICA}/proyecto/${proyecto.id}`}>{TEXTOS.murales.verClasico}</Link>}
+    >
+      <p>{proyecto.resumen}</p>
+      <h3>{C.reto}</h3>
+      <p>{proyecto.problema}</p>
+      <h3>{C.papel}</h3>
+      <p>{proyecto.rol}</p>
+      <h3>{C.tecnologias}</h3>
+      <p>{proyecto.tecnologias.join(' · ')}</p>
+      <h3>{C.logro}</h3>
+      <p>{proyecto.resultado}</p>
+      <div className="acciones">
+        <EnlaceExterno etiqueta={C.codigo} url={proyecto.enlaces.codigo} />
+        <EnlaceExterno etiqueta={C.demo} url={proyecto.enlaces.demo} />
+      </div>
+    </Panel>
+  )
+}
+
+const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes, proyecto: Proyecto }
 
 export function Paneles() {
   const panel = useExperiencia((s) => s.panel)
   const Contenido = panel ? PANELES[panel.tipo] : null
-  return Contenido ? <Contenido key={panel.tipo} /> : null
+  return Contenido ? <Contenido key={`${panel.tipo}-${panel.id ?? ""}`} /> : null
 }
