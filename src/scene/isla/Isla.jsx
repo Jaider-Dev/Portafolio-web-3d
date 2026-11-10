@@ -38,7 +38,28 @@ function crearSuperficie() {
       indices.push(a, b, c, b, d, c)
     }
   }
-  return pintarPorPendiente(unirCaras(posiciones, indices))
+  return pintarPorPendiente(abrirRanuraDeLaCueva(unirCaras(posiciones, indices)))
+}
+
+// La entrada de la cueva (02 Z5): el terreno es un mapa de alturas y no admite túneles, y su pared
+// detrás de la cascada está hecha de triángulos de hasta 16 m. Se quitan solo las caras de pared
+// (casi verticales) en ese tramo; la fachada de roca con la puerta (lugares/Cueva.jsx) tapa la ranura
+const RANURA_CUEVA = { x: [1.6, 6.4], z: [-18.7, -17.3] }
+function abrirRanuraDeLaCueva(geometria) {
+  const pos = geometria.attributes.position
+  const nor = geometria.attributes.normal
+  const quedan = []
+  for (let i = 0; i < pos.count; i += 3) {
+    const x = (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3
+    const z = (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3
+    const vertical = Math.abs(nor.getY(i)) < 0.75
+    const enRanura = x > RANURA_CUEVA.x[0] && x < RANURA_CUEVA.x[1] && z > RANURA_CUEVA.z[0] && z < RANURA_CUEVA.z[1]
+    if (!(vertical && enRanura)) for (let v = 0; v < 3; v++) quedan.push(pos.getX(i + v), pos.getY(i + v), pos.getZ(i + v))
+  }
+  const abierta = new THREE.BufferGeometry()
+  abierta.setAttribute('position', new THREE.Float32BufferAttribute(quedan, 3))
+  abierta.computeVertexNormals()
+  return abierta
 }
 
 // Color por cara según su pendiente: las caras empinadas (paredes de la colina, la pared de la cascada)
