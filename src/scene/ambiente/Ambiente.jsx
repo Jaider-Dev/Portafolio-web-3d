@@ -5,6 +5,7 @@ import { MUNDO } from '../../data/mundo.js'
 import { useExperiencia } from '../../store/useExperiencia'
 import { useHora } from '../../store/hora'
 import { AMBIENTES, DURACION_CAMBIO, PALETA } from '../paleta'
+import { transicionHora } from './transicion'
 
 const RADIO_CIELO = 450 // la bóveda sigue a la cámara: siempre dentro de su far (600)
 const { manana: M, noche: N } = AMBIENTES
@@ -110,6 +111,7 @@ export function Ambiente() {
     const actual = progreso.current
     progreso.current = actual < meta ? Math.min(meta, actual + paso) : Math.max(meta, actual - paso)
     const t = THREE.MathUtils.smoothstep(progreso.current, 0, 1)
+    transicionHora.t = t // para el farol, la fogata y las nubes
 
     const { uniforms } = datos.materialCielo
     for (const k of ['cenit', 'horizonte', 'bajo']) uniforms[k].value.lerpColors(...datos.colores[k], t)
@@ -135,7 +137,8 @@ export function Ambiente() {
   const [xF, , zF] = MUNDO.fogata
   return (
     <>
-      <fog ref={niebla} attach="fog" args={[M.horizonte, 160, 460]} />
+      {/* La niebla empieza pasada la isla: tiñe las nubes e islas lejanas y separa los planos (HU-16) */}
+      <fog ref={niebla} attach="fog" args={[M.horizonte, 110, 420]} />
       {/* La bóveda viaja con la cámara (como un skybox): nunca queda más allá del far y no hay paralaje */}
       <group ref={boveda}>
         <mesh material={datos.materialCielo} renderOrder={-1}>
