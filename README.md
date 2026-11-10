@@ -2,8 +2,9 @@
 
 Portafolio profesional con forma de isla flotante que se recorre. Proyecto del curso 750047C *Diseño de Experiencias Web 3D* (Universidad del Valle, 2026-II). "Bitácora" es un nombre provisional.
 
-**Demo:** pendiente de desplegar en Vercel.
-**Estado:** *sprint* 1, "La isla existe": *blockout* navegable en modo panorámico, primeros modelos GLB, carga e intro, Sobre mí, contacto, menú de viaje y versión clásica en 2D. El contenido personal sigue con marcadores (`{NOMBRE}`, `{ROL}`…) y la escena usa grises neutros porque la paleta aún no está decidida.
+- **Demo:** <https://portafolio-web-3d.vercel.app> (versión clásica en [/clasico](https://portafolio-web-3d.vercel.app/clasico)). Cada *push* a `main` se despliega en Vercel.
+- **Repositorio:** <https://github.com/Jaider-Dev/Portafolio-web-3d>
+- **Estado:** *sprint* 1, "La isla existe": *blockout* navegable en modo panorámico, primeros modelos GLB, carga e intro, Sobre mí, contacto, menú de viaje y versión clásica en 2D. El contenido personal sigue con marcadores (`{NOMBRE}`, `{ROL}`…) y la escena usa grises neutros porque la paleta aún no está decidida.
 
 ## Instalación y ejecución
 
