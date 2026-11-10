@@ -1,4 +1,5 @@
 import { Ambiente } from './ambiente/Ambiente'
+import { Nubes } from './ambiente/Nubes'
 import { Agua } from './agua/Agua'
 import { Isla } from './isla/Isla'
 import { Vegetacion } from './isla/Vegetacion'
@@ -10,6 +11,7 @@ export function Mundo() {
   return (
     <>
       <Ambiente />
+      <Nubes />
       <Isla />
       <Agua />
       <Vegetacion />

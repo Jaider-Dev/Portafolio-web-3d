@@ -12,6 +12,9 @@ export const PALETA = {
   espuma: '#afd7de', // vetas de la corriente, orillas y bruma (el agua clara de la referencia)
   lona: '#e38531', // tienda
   fuego: '#f4af36', // brasas y luz de la fogata
+  llama: '#e38531', // el núcleo de la llama: el naranja de la tienda
+  nube: '#e5f4fa', // nubes de la referencia
+  humo: '#cdc8bd', // gris cálido claro, entre la nube y la piedra
   cueva: '#3b382f', // roca en penumbra (la roca oscurecida)
   sombra: '#2a2620', // huecos (entrada de la tienda)
   letrero: '#3a2818', // texto de las flechas del poste
