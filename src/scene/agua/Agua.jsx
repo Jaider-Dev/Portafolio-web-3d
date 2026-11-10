@@ -45,9 +45,9 @@ export function Agua() {
 
   return (
     <group name="agua">
-      <mesh geometry={rio}>{material}</mesh>
-      <mesh geometry={arroyo}>{material}</mesh>
-      <mesh position={centro} rotation-x={-Math.PI / 2}>
+      <mesh geometry={rio} receiveShadow>{material}</mesh>
+      <mesh geometry={arroyo} receiveShadow>{material}</mesh>
+      <mesh position={centro} rotation-x={-Math.PI / 2} receiveShadow>
         <circleGeometry args={[radio, 24]} />
         {material}
       </mesh>
