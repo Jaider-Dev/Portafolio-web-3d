@@ -4,7 +4,7 @@ Portafolio profesional con forma de isla flotante que se recorre. Proyecto del c
 
 - **Demo:** <https://portafolio-web-3d.vercel.app> (versión clásica en [/clasico](https://portafolio-web-3d.vercel.app/clasico)). Cada *push* a `main` se despliega en Vercel.
 - **Repositorio:** <https://github.com/Jaider-Dev/Portafolio-web-3d>
-- **Estado:** *sprint* 1, "La isla existe": *blockout* navegable en modo panorámico, primeros modelos GLB, carga e intro, Sobre mí, contacto, menú de viaje y versión clásica en 2D. El contenido personal sigue con marcadores (`{NOMBRE}`, `{ROL}`…) y la escena usa grises neutros porque la paleta aún no está decidida.
+- **Estado:** *sprint* 1, "La isla existe": *blockout* navegable en modo panorámico, primeros modelos GLB, carga e intro, Sobre mí, contacto, menú de viaje y versión clásica en 2D. El nombre y el rol ya son los reales; el resto del contenido personal sigue con marcadores (`{RESUMEN}`, `{CORREO}`…) y la escena usa grises neutros porque la paleta aún no está decidida.
 
 ## Instalación y ejecución
 
@@ -24,6 +24,7 @@ npm run dev
 | `npm test` | Máquina de estados y coordenadas contra `02 · Mapa` §5 |
 | `npm run modelos:generar` | Regenera los GLB provisionales de `public/models` |
 | `npm run modelos:revisar` | Revisa triángulos y peso de cada GLB frente a su presupuesto |
+| `npm run fuente:generar` | Convierte Inter Bold a la fuente del texto 3D (`public/fonts/inter-700.typeface.json`), con tildes y eñe |
 
 **Solo en desarrollo:** `?depurar` muestra ejes y rejilla, `?sinwebgl` simula un navegador sin WebGL y `?fallarcarga` simula un error de carga. El panel de rendimiento aparece siempre en desarrollo y nunca en producción.
 

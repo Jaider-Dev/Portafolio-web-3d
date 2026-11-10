@@ -17,7 +17,7 @@ No necesitan compresión: suman 88 KB de los 15 MB permitidos.
 
 | Archivo | Fuente | Licencia |
 |---|---|---|
-| `fonts/helvetiker_regular.typeface.json` | Helvetiker, de los ejemplos de three.js | Licencia de MAGENTA Ltd., en `fonts/helvetiker-LICENSE.txt` |
+| `fonts/inter-700.typeface.json` | Inter Bold, convertida a *typeface JSON* para el texto 3D con `npm run fuente:generar` (ASCII y Latin-1: tildes, eñe, ¿ ¡). Sustituye a Helvetiker, que no traía tildes | SIL OFL 1.1, en `fonts/inter-LICENSE.txt` |
 | `fonts/inter-latin-400-normal.woff` | Inter, del paquete `@fontsource/inter` | SIL OFL 1.1, en `fonts/inter-LICENSE.txt` |
 
 ## Librerías
