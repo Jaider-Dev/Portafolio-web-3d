@@ -8,3 +8,13 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Copias de seguridad automáticas de Blender
+*.blend1
+
+# Blender: modelos descargados (pesados; origen en CREDITS.md), cachés y salidas que se regeneran con los scripts
+blender/fuente/
+blender/__pycache__/
+blender/procedural/
+blender/personaje.blend
+blender/personaje.fbx

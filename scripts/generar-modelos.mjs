@@ -1,4 +1,5 @@
-// Primeros modelos GLB del proyecto (HU-04): tienda, fogata, puente y menhir, construidos por código.
+// Primeros modelos GLB del proyecto (HU-04): fogata y menhir, construidos por código.
+// La tienda y el puente ya se modelan en Blender (blender/tienda.py y blender/puente.py): este script no los toca.
 // Medidas de 02 · Mapa §2 y §5. 1 unidad = 1 m, +Y arriba, origen en la base de la pieza.
 // Materiales en gris y con nombre: al cargarlos, src/scene/lugares/Lugares.jsx les pone el color de la paleta (PL-05).
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -59,28 +60,6 @@ const pieza = (nombre, partes) => {
   return grupo
 }
 
-const prisma = (ancho, alto, largo) => {
-  const forma = new THREE.Shape([
-    new THREE.Vector2(-ancho / 2, 0), new THREE.Vector2(ancho / 2, 0), new THREE.Vector2(0, alto),
-  ])
-  const geometria = new THREE.ExtrudeGeometry(forma, { depth: largo, bevelEnabled: false })
-  geometria.translate(0, 0, -largo / 2)
-  return geometria
-}
-
-// Planta de 3 × 2,5 m y 2 m de alto; la entrada mira a +Z
-const tienda = () => {
-  const palo = new THREE.CylinderGeometry(0.04, 0.05, 2.1, 5)
-  return pieza('tienda', {
-    lona: [colocar(prisma(2.5, 2, 3))],
-    sombra: [colocar(prisma(1.5, 1.45, 0.02), { p: [0, 0, 1.51] })],
-    madera: [
-      colocar(palo, { p: [0, 1.05, 1.56] }),
-      colocar(palo, { p: [0, 1.05, -1.56] }),
-    ],
-  })
-}
-
 // Anillo de piedras de radio ≈ 0,6 m, leños cruzados y una llama de bulto
 const fogata = () => {
   const roca = new THREE.DodecahedronGeometry(0.16)
@@ -104,34 +83,6 @@ const fogata = () => {
   })
 }
 
-// 7 m de largo en X y 1,6 m de ancho; el origen es el centro del tablero
-const puente = () => {
-  const curva = (x) => -0.48 * (x / 3.5) ** 2
-  const pendiente = (x) => (-0.96 * x) / 3.5 ** 2
-  const tablon = new THREE.BoxGeometry(0.34, 0.07, 1.6)
-  const tablones = Array.from({ length: 19 }, (_, i) => {
-    const x = -3.4 + (i * 6.8) / 18
-    return colocar(tablon, { p: [x, curva(x), 0], r: [0, 0, Math.atan(pendiente(x))] })
-  })
-  const poste = new THREE.CylinderGeometry(0.05, 0.06, 0.95, 6)
-  const cuerda = new THREE.CylinderGeometry(0.025, 0.025, 1.75, 5)
-  const postes = []
-  const cuerdas = []
-  const puntos = [-3.3, -1.65, 0, 1.65, 3.3]
-  for (const z of [-0.74, 0.74]) {
-    puntos.forEach((x, i) => {
-      postes.push(colocar(poste, { p: [x, curva(x) + 0.45, z] }))
-      if (i === puntos.length - 1) return
-      const mitad = x + 0.825
-      cuerdas.push(colocar(cuerda, {
-        p: [mitad, curva(mitad) + 0.86, z],
-        r: [0, 0, Math.PI / 2 + Math.atan(pendiente(mitad))],
-      }))
-    })
-  }
-  return pieza('puente', { madera: [...tablones, ...postes, ...cuerdas] })
-}
-
 // La misma silueta en los cinco puntos de viaje (02 · Mapa §7): monolito con remate y base
 const menhir = () => pieza('menhir', {
   piedra: [
@@ -148,8 +99,6 @@ const exportar = (nombre, escena) => new Promise((ok, error) => {
   }, error, { binary: true })
 })
 
-await exportar('tienda', tienda())
 await exportar('fogata', fogata())
-await exportar('puente', puente())
 await exportar('menhir', menhir())
 console.log(`Modelos escritos en ${salida}`)
