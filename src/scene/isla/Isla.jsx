@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { PALETA } from '../paleta'
 import { alturaDelTerreno, CONTORNO, distanciaAlSendero, puntoDelContorno, SENDERO_DENSO } from './terreno.js'
+import { useMaterialPBR, uvPorCaja } from '../materiales'
 
 const SECTORES = 200
 const ANILLOS = 48
@@ -132,16 +133,18 @@ function crearMasa() {
 }
 
 export function Isla() {
-  const superficie = useMemo(() => crearSuperficie(), [])
-  const masa = useMemo(() => crearMasa(), [])
+  const superficie = useMemo(() => uvPorCaja(crearSuperficie(), 4), [])
+  const masa = useMemo(() => uvPorCaja(crearMasa(), 5), [])
+  const suelo = useMaterialPBR('suelo', 0.6)
+  const roca = useMaterialPBR('roca')
   return (
     <group name="isla">
       <mesh geometry={superficie} castShadow receiveShadow>
         {/* El color viene de cada cara (vertexColors): hierba en lo llano y roca en lo empinado */}
-        <meshStandardMaterial vertexColors flatShading roughness={1} />
+        <meshStandardMaterial {...suelo} vertexColors flatShading roughness={1} />
       </mesh>
       <mesh geometry={masa}>
-        <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
+        <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>
     </group>
   )

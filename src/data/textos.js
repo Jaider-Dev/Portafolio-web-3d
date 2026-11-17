@@ -56,6 +56,11 @@ export const TEXTOS = {
     nombre: 'Modo noche', // con aria-pressed: "Modo noche, activado / desactivado"
     pista: { manana: 'Cambiar a la noche', noche: 'Cambiar a la mañana' },
   },
+  sonido: {
+    nombre: 'Sonido', // con aria-pressed: "Sonido, activado / desactivado"
+    activar: 'Activar sonido',
+    silenciar: 'Silenciar',
+  },
   menu: {
     titulo: 'Viajar a…',
     cerrar: 'Cerrar',

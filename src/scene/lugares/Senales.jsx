@@ -52,7 +52,7 @@ export function Letrero() {
         <meshStandardMaterial color={PALETA.madera} flatShading />
       </mesh>
       <Center position={[0, 1.35, 0.1]}>
-        <Text3D castShadow font={FUENTE_3D} size={tamano} height={0.08} curveSegments={4} bevelEnabled bevelSize={0.012} bevelThickness={0.012} bevelSegments={2}>
+        <Text3D castShadow font={FUENTE_3D} size={tamano} height={0.08} curveSegments={3} bevelEnabled bevelSize={0.012} bevelThickness={0.012} bevelSegments={1}>
           {PERFIL.nombre}
           <meshStandardMaterial ref={letras} color={PALETA.realce} emissive={PALETA.fuego} emissiveIntensity={BRILLO_LETRAS[0]} />
         </Text3D>

@@ -11,6 +11,7 @@ import { ANTESALA, crearGaleria, GALERIA, PUERTA, puntoEnLaPared, ruido } from '
 import { texturaHalo } from '../efectos'
 import { Brasas } from './Fogata'
 import { Murales } from './Murales'
+import { useMaterialPBR, uvPorCaja } from '../materiales'
 
 // Cueva de los murales (02 Z5, 06 §11): fachada de roca con una puerta en arco detrás de la cascada,
 // una antesala corta y una galería en cúpula con antorchas, cristales y estalactitas. Preparada para
@@ -227,7 +228,8 @@ function LucesDeAntorchas({ cantidad }) {
 }
 
 export function Cueva() {
-  const geometrias = useMemo(() => ({ fachada: crearFachada(), antesala: crearAntesala(), galeria: crearGaleria(), matcap: crearMatcap() }), [])
+  const geometrias = useMemo(() => ({ fachada: uvPorCaja(crearFachada()), antesala: uvPorCaja(crearAntesala()), galeria: uvPorCaja(crearGaleria()), matcap: crearMatcap() }), [])
+  const roca = useMaterialPBR('roca')
   const { nivel } = useCalidad()
   const luces = LUCES_ANTORCHA[nivel] ?? LUCES_ANTORCHA.alta
   const [cx, , cz] = GALERIA.centro
@@ -235,20 +237,20 @@ export function Cueva() {
   return (
     <group name="cueva">
       <mesh geometry={geometrias.fachada} castShadow receiveShadow name="cueva-fachada">
-        <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
+        <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>
       {ROCAS_PORTAL.map(([x, y, r]) => (
         <mesh key={`${x},${y}`} position={[x, y, FACHADA.z + 0.25]} rotation={[x, y, x * y]} castShadow receiveShadow>
           <dodecahedronGeometry args={[r, 0]} />
-          <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} />
+          <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} />
         </mesh>
       ))}
       <mesh geometry={geometrias.antesala} receiveShadow name="cueva-antesala">
-        <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
+        <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>
       <mesh geometry={geometrias.galeria} receiveShadow name="cueva-galeria">
         {/* Roca normal, no oscura: la penumbra la da la falta de luz y las antorchas iluminan la pared */}
-        <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} side={THREE.BackSide} />
+        <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.BackSide} />
       </mesh>
       {/* Suelo de roca llano (para caminar en el sprint 4): la galería y la antesala */}
       <mesh position={[cx, 0.02, cz]} rotation-x={-Math.PI / 2} scale={[GALERIA.radios[0], GALERIA.radios[2], 1]} receiveShadow name="cueva-suelo">

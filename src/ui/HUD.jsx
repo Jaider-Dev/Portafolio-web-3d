@@ -5,6 +5,7 @@ import { TEXTOS } from '../data/textos'
 import { useExperiencia } from '../store/useExperiencia'
 import { rutaClasicaDe } from '../utils/rutas'
 import { BotonHora } from './BotonHora'
+import { BotonSonido } from './BotonSonido'
 
 const FASES_CON_HUD = ['vuelo', 'explorando', 'panel', 'viajando']
 
@@ -50,6 +51,7 @@ export function HUD() {
               <circle cx="18" cy="18" r="2" />
             </svg>
           </button>
+          <BotonSonido className="hud-sonido" />
           <BotonHora className="hud-hora" />
           <Link className="boton hud-clasico" to={rutaClasicaDe(pathname, panel)} aria-label={TEXTOS.hud.clasicoAccesible}>
             <span className="solo-ancho">{TEXTOS.hud.clasico}</span>

@@ -5,6 +5,7 @@ export const MUNDO = {
   troncos: { radio: 1.8, cantidad: 3 },
   tienda: [-17, 0, 1],
   mochila: [-15.5, 0, 3],
+  explorador: [-11.2, 3.4], // x, z: junto a la fogata, del lado del sendero (fuera del círculo de troncos)
   poste: [-9, 0, 9],
   letrero: [-11, 0, 10],
   vado: { desde: -2, hasta: 2, y: -0.1, z: 8, piedras: 5 },

@@ -1,10 +1,14 @@
-import { useMemo } from 'react'
-import { Clone, Instance, Instances, useGLTF } from '@react-three/drei'
+import { useMemo, useState } from 'react'
+import { Clone, Instance, Instances, useCursor, useGLTF } from '@react-three/drei'
+import { PANEL_DE_LUGAR, useExperiencia } from '../../store/useExperiencia'
 import { LUGARES } from '../../data/lugares.js'
 import { MUNDO } from '../../data/mundo.js'
 import { PALETA } from '../paleta'
 import { alturaDelTerreno, ESTANQUE, SENDERO_DENSO } from '../isla/terreno.js'
 import { FuegoVivo } from './Fogata'
+import { useMaterialPBR } from '../materiales'
+import { Explorador } from '../personaje/Explorador'
+import { CANDIDATOS } from '../personaje/candidatos'
 
 const RUTAS = {
   tienda: '/models/tienda.glb',
@@ -56,8 +60,20 @@ function Modelo({ ruta, ...props }) {
 
 // Menhires (02 §7): piedras hincadas irregulares y algo inclinadas, con piedras pequeñas en la base.
 // Antes eran obeliscos tallados (cilindro + punta) y parecían torres
-function Menhir({ posicion, semilla }) {
+// Cada menhir abre la sección de su lugar (17-nov): Sobre mí, habilidades, proyectos, trayectoria, visión
+function Menhir({ lugar, posicion, semilla }) {
   const azar = useMemo(() => generador(semilla), [semilla])
+  const abrirPanel = useExperiencia((s) => s.abrirPanel)
+  const viajar = useExperiencia((s) => s.viajar)
+  const [encima, setEncima] = useState(false)
+  useCursor(encima)
+  const texturaRoca = useMaterialPBR('roca')
+  const activar = (e) => {
+    if (e.delta > 4) return // fue un arrastre de la cámara, no un clic
+    e.stopPropagation()
+    if (lugar === 'cueva') viajar('cueva')
+    else abrirPanel({ tipo: lugar === 'campamento' ? 'sobre-mi' : PANEL_DE_LUGAR[lugar] })
+  }
   const [x, , z] = posicion
   const y = alturaDelTerreno(x, z)
   const base = useMemo(() => Array.from({ length: 3 }, (_, i) => {
@@ -66,9 +82,10 @@ function Menhir({ posicion, semilla }) {
   }), [azar, x, y, z, semilla])
   return (
     <group name="menhir">
-      <mesh position={[x, y + 1.05, z]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow>
+      <mesh position={[x, y + 1.05, z]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow
+        onClick={activar} onPointerOver={(e) => { e.stopPropagation(); setEncima(true) }} onPointerOut={() => setEncima(false)}>
         <dodecahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color={PALETA.piedra} flatShading roughness={1} />
+        <meshStandardMaterial {...texturaRoca} color={encima ? PALETA.realce : PALETA.piedra} flatShading roughness={1} />
       </mesh>
       <Rocas piedras={base} color={PALETA.piedra} />
     </group>
@@ -78,7 +95,7 @@ function Menhir({ posicion, semilla }) {
 export function Menhires() {
   return (
     <group name="menhires">
-      {LUGARES.map((lugar, i) => <Menhir key={lugar.id} posicion={lugar.menhir} semilla={3 + i * 11} />)}
+      {LUGARES.map((lugar, i) => <Menhir key={lugar.id} lugar={lugar.id} posicion={lugar.menhir} semilla={3 + i * 11} />)}
     </group>
   )
 }
@@ -94,6 +111,7 @@ export function Campamento() {
       <Modelo ruta={RUTAS.tienda} position={MUNDO.tienda} rotation-y={haciaFogata} />
       <Modelo ruta={RUTAS.fogata} position={MUNDO.fogata} />
       <FuegoVivo position={MUNDO.fogata} />
+      {MOSTRAR_EXPLORADOR && <ExploradorEnElCampamento />}
       {Array.from({ length: cantidad }, (_, i) => {
         const angulo = Math.PI / 4 + (i / cantidad) * Math.PI * 2
         return (
@@ -115,6 +133,32 @@ export function Campamento() {
           <meshStandardMaterial color={PALETA.agua} flatShading />
         </mesh>
       </group>
+    </group>
+  )
+}
+
+// Los candidatos a explorador, uno al lado del otro mirando a la fogata, para elegir uno (17-nov).
+// El 1 es el preparado el 16-nov (sin color) y el 3, el low poly. El 2 se descartó el 17-nov
+const MOSTRAR_EXPLORADOR = true
+const SEPARACION = 1.1
+
+function ExploradorEnElCampamento() {
+  const [x, z] = MUNDO.explorador
+  const [xFogata, , zFogata] = MUNDO.fogata
+  const giro = Math.atan2(xFogata - x, zFogata - z)
+  // Eje perpendicular a la mirada: los candidatos quedan en fila frente a la fogata
+  const lado = [Math.cos(giro), -Math.sin(giro)]
+  return (
+    <group name="candidatos">
+      {[[1, -0.5], [3, 0.5]].map(([id, k]) => {
+        const cx = x + lado[0] * SEPARACION * k
+        const cz = z + lado[1] * SEPARACION * k
+        const { ruta, sinColor, nombre } = CANDIDATOS[id]
+        return (
+          <Explorador key={id} ruta={ruta} sinColor={sinColor} name={nombre}
+            position={[cx, alturaDelTerreno(cx, cz), cz]} rotation-y={giro} />
+        )
+      })}
     </group>
   )
 }
@@ -172,11 +216,12 @@ function piedrasDelSendero() {
 
 export function Sendero() {
   const piedras = useMemo(() => piedrasDelSendero(), [])
+  const texturaRoca = useMaterialPBR('roca')
   return (
     <group name="sendero">
       <Instances limit={piedras.length} castShadow receiveShadow>
         <dodecahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color={PALETA.piedra} flatShading roughness={1} />
+        <meshStandardMaterial {...texturaRoca} color={PALETA.piedra} flatShading roughness={1} />
         {piedras.map(({ posicion, rotacion, escala }) => <Instance key={posicion.join()} position={posicion} rotation={rotacion} scale={escala} />)}
       </Instances>
     </group>
@@ -185,10 +230,11 @@ export function Sendero() {
 
 // Afloramiento de rocas: varias piedras facetadas apoyadas en el terreno alrededor de un punto
 function Rocas({ piedras, nombre, color = PALETA.roca }) {
+  const texturaRoca = useMaterialPBR('roca')
   return (
     <Instances limit={piedras.length} castShadow receiveShadow name={nombre}>
       <dodecahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color={color} flatShading roughness={1} />
+      <meshStandardMaterial {...texturaRoca} color={color} flatShading roughness={1} />
       {piedras.map(({ posicion, escala, rotacion }) => <Instance key={posicion.join()} position={posicion} scale={escala} rotation={rotacion} />)}
     </Instances>
   )

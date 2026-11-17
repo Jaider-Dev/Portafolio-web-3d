@@ -48,6 +48,15 @@ src/
 
 Ningún modelo entra al proyecto sin pasar por estos pasos:
 
+0. **Modelar en Blender** con un script reproducible en `blender/` (por ejemplo `blender/tienda.py`), que guarda el `.blend` y exporta el GLB:
+
+   ```bash
+   "/c/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup --python blender/tienda.py
+   ```
+
+   Vista previa sin abrir la app: `blender --background --factory-startup --python blender/vista_previa.py -- public/models/tienda.glb vista.png`.
+
+
 1. **Revisar** triángulos, texturas y licencia: `npm run modelos:revisar`.
 2. **Normalizar:** 1 unidad = 1 m, +Y arriba, origen en la base de la pieza.
 3. **Exportar** a GLB en `public/models/`, con el nombre en minúsculas.
@@ -91,7 +100,9 @@ Peso que descarga la isla: **455 KB con gzip** (0,19 s a 20 Mbps, sin contar el 
 - **Versiones fijadas** a las del curso (`~`), porque las particularidades del stack se comprobaron con ellas.
 - **Vuelos de cámara propios** en `DirectorDeCamara`: la curva y la duración son exactas (3,5 s y 1,5 s). `setLookAt(…, true)` no permite fijar ninguna de las dos.
 - **Terreno calculado por función** (`scene/isla/terreno.js`) en lugar de un cilindro y cajas: permite tallar el río y la poza a su altura, y probar las alturas con `npm test`.
-- **Modelos generados por código** (`scripts/generar-modelos.mjs`): son provisionales hasta modelar en Blender.
+- **Modelos:** la tienda y el puente ya salen de Blender (`blender/*.py`: el script es la receta y el `.blend` queda para seguir a mano); la fogata y el menhir siguen generados por código (`scripts/generar-modelos.mjs`).
+- **Personaje** (`src/scene/personaje/Explorador.jsx`): GLB con esqueleto y tres clips (`reposo`, `caminar`, `correr`) que se reproducen con `useAnimations`; `SkeletonUtils.clone` para poder clonarlo. Se prepara desde el modelo descargado con `blender/preparar_personaje.py` (unos 2,5 min): retopología a quads con QuadriFlow (a escala ×100, porque rechaza aristas muy cortas), color por zonas y horneado, pesos por distancia a los huesos (los de calor de Blender fallan con este modelo). En el modo panorámico espera junto a la fogata.
+- **Sonido sintetizado** (`src/scene/sonido/`): ruido filtrado y chasquidos generados con Web Audio, posicionales con `THREE.PositionalAudio`; silencio hasta pulsar el botón del HUD (HU-18).
 - **En móvil vertical** la distancia máxima de cámara supera los 60 m, porque con ese límite la isla no cabe a lo ancho.
 
 Diseño completo y trazabilidad en los documentos del curso (`Documentos/Proyecto final/`).

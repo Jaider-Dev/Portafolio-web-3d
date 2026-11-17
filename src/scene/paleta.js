@@ -19,6 +19,14 @@ export const PALETA = {
   sombra: '#2a2620', // huecos (entrada de la tienda)
   letrero: '#3a2818', // texto de las flechas del poste
   realce: '#f4af36', // lo que se puede tocar: el ámbar del fuego
+  // El explorador (15-nov-2026, elegidos por el autor: piel trigueña clara, cabello negro y liso). Su ropa sale
+  // de la paleta: túnica = agua (azul), cota de malla = roca, hombrera = piedra, cuero = madera y letrero,
+  // pantalón = humo, hebillas y farol = fuego
+  piel: '#d9a982',
+  cabello: '#151315',
+  labios: '#a3665a',
+  iris: '#4a2e1c',
+  esclerotica: '#efe8dc',
 }
 
 // Luz de cada hora del día. "Mañana dorada" y "noche azul violácea", elegidas por el autor.
