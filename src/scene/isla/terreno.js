@@ -51,7 +51,7 @@ const alturaColina = (x, z) => {
 const CAUCE_PLANO = [...CAUCE.map(([x, , z]) => [x, z]), [-4.8, 25]]
 const POZA = MUNDO.poza
 
-const distanciaAlCauce = (x, z) => {
+export const distanciaAlCauce = (x, z) => {
   let distancia = Infinity
   for (let i = 0; i < CAUCE_PLANO.length - 1; i++) {
     distancia = Math.min(distancia, distanciaASegmento(x, z, CAUCE_PLANO[i], CAUCE_PLANO[i + 1]))

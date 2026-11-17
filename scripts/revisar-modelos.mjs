@@ -1,13 +1,17 @@
 // Paso de revisión del flujo de assets (06 §20): triángulos, peso y mallas de cada GLB frente a su presupuesto.
 // Termina con error si algo se pasa, para que ningún modelo entre sin cumplirlo.
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const carpeta = resolve(dirname(fileURLToPath(import.meta.url)), '../public/models')
 
 const POR_DEFECTO = 5000 // objetos: tienda, puente, fogata…
-const PRESUPUESTO = { isla: 60000, 'isla-colision': 5000, cueva: 40000, personaje: 15000 }
+// Los kits de naturaleza suman todas sus piezas; en la escena cada pieza se dibuja instanciada
+const PRESUPUESTO = {
+  isla: 60000, 'isla-colision': 5000, cueva: 40000, personaje: 15000, 'personaje-3': 15000,
+  'naturaleza/arboles': 15000, 'naturaleza/detalles': 5000, 'naturaleza/rocas': 5000,
+}
 const PESO_TOTAL_MAXIMO = 15 * 1024 * 1024
 
 function leerGlb(ruta) {
@@ -27,7 +31,8 @@ function triangulos(gltf) {
   ), 0)
 }
 
-const archivos = readdirSync(carpeta).filter((nombre) => nombre.endsWith('.glb'))
+// También las subcarpetas (models/naturaleza)
+const archivos = readdirSync(carpeta, { recursive: true }).map((nombre) => nombre.split(sep).join('/')).filter((nombre) => nombre.endsWith('.glb'))
 let hayError = false
 let pesoTotal = 0
 const filas = archivos.map((archivo) => {

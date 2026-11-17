@@ -2,18 +2,37 @@
 
 ## Modelos 3D
 
-Todos son trabajo propio. La tienda y el puente se modelan en **Blender 5.2** con scripts de Python (`blender/`); la fogata y el menhir siguen generados por código (`scripts/generar-modelos.mjs`) hasta pasarlos también a Blender.
+### Propios
+
+La tienda y el puente se modelan en **Blender 5.2** con scripts de Python (`blender/`). Los personajes son autoría propia, preparados en Blender (`blender/preparar_personaje.py`, `preparar_candidatos.py` y `riggear_candidato3.py`).
 
 | Archivo | Triángulos | Peso | Presupuesto | Origen |
 |---|---|---|---|---|
 | `models/tienda.glb` | 752 | 57,6 KB | ≤ 5.000 | Propio · Blender (`blender/tienda.py`) |
 | `models/puente.glb` | 1.420 | 101,8 KB | ≤ 5.000 | Propio · Blender (`blender/puente.py`) |
-| `models/personaje.glb` | 13.764 (6.882 quads) | 1.066 KB (2 texturas WebP de 1K) | ≤ 15.000 | **Modelo descargado por el autor (16-nov-2026), origen y licencia PENDIENTES de registrar.** Original en `blender/fuente/personaje_descargado.glb` (1 millón de triángulos); preparado con `blender/preparar_personaje.py`: retopología a quads, color por zonas con la paleta y horneado de color y normales, esqueleto de 22 huesos y animaciones propias (reposo, caminar, correr) |
-| `models/personaje-3.glb` | 654 (217 quads de 437 caras) | 124 KB (1 textura WebP, esqueleto y animación) | ≤ 15.000 | Candidato (17-nov-2026). **"Guest male 3 - Medieval Fantasy Challenge" de tuturu** (<https://sketchfab.com/tuturu>), licencia **CC-BY 4.0** (<http://creativecommons.org/licenses/by/4.0/>), <https://sketchfab.com/3d-models/guest-male-3-medieval-fantasy-challenge-a7546264137f4df89223a3729cd4df19>. **Modificado:** piel, cabello y ropa recoloreados con la paleta, sin barba ni bigote, cabello alargado, Tris to Quads, 1,5 m (`blender/preparar_candidatos.py -- 3`); esqueleto de 22 huesos con nombres de Mixamo, pose T y animación "reposo" (`blender/riggear_candidato3.py`). Para Mixamo: `blender/personaje-3-mixamo.fbx` |
-| `models/fogata.glb` | 408 | 31,3 KB | ≤ 5.000 | Propio · código |
-| `models/menhir.glb` | 58 | 5,1 KB | ≤ 5.000 | Propio · código (sin usar: los menhires se dibujan en `Lugares.jsx`) |
+| `models/personaje.glb` | 13.764 (6.882 quads) | 1.066 KB (2 texturas WebP de 1K) | ≤ 15.000 | Propio · Blender: quads, color por zonas con la paleta, esqueleto de 22 huesos y animaciones (reposo, caminar, correr) |
+| `models/personaje-3.glb` | 654 (217 quads de 437 caras) | 124 KB (1 textura WebP) | ≤ 15.000 | Propio · Blender: colores de la paleta, cabello largo, quads, 1,5 m; esqueleto de 22 huesos con nombres de Mixamo, pose T y animación "reposo". Para Mixamo: `blender/personaje-3-mixamo.fbx` |
 
-Sin Draco por ahora: suman 1,26 MB de los 15 MB permitidos. Con piezas pequeñas el decodificador pesaría más que lo que ahorra; el personaje (1 MB, casi todo texturas) es el primero en el que conviene volver a medirlo en la optimización (sesión 12, HT-15).
+### De Sketchfab (CC-BY 4.0)
+
+Paquetes descargados de [Sketchfab](https://sketchfab.com) con licencia **Creative Commons Atribución 4.0** (<http://creativecommons.org/licenses/by/4.0/>). Los originales están en `blender/fuente/` (no se suben al repositorio).
+
+| Paquete | Autor | Enlace |
+|---|---|---|
+| "Arboles, piedras, pasto y hongos low poly" | bishion (<https://sketchfab.com/bishion>) | <https://sketchfab.com/3d-models/arboles-piedras-pasto-y-hongos-low-poly-73bdd8a49719460e8de6195553140710> |
+| "Lowpoly Trees" | Carlos_SR (<https://sketchfab.com/CarlosSR>) | <https://sketchfab.com/3d-models/lowpoly-trees-84149cefe9844f318f4ac495be9e9e3a> |
+| "Fogata" | Akxme_17 (<https://sketchfab.com/akxme0411>) | <https://sketchfab.com/3d-models/fogata-8a511bd52f64483d803eb9e41077e101> |
+
+**Modificaciones** (17-nov-2026, `blender/kit_naturaleza.py`): cada pieza se separó en su propio modelo (en "Lowpoly Trees", cada copa se asignó a su tronco), se recoloreó con la paleta del proyecto (color por vértice), se escaló a metros y se pasó a quads. Se exportan sin normales (la escena usa sombreado plano).
+
+| Archivo | Piezas | Triángulos | Peso | Presupuesto | Sale de |
+|---|---|---|---|---|---|
+| `models/naturaleza/arboles.glb` | 15 árboles grandes (pinos, abetos, álamos, robles, frondosos, retorcidos y el paraguas) | 12.667 | 246,7 KB | ≤ 15.000 | bishion y Carlos_SR |
+| `models/naturaleza/detalles.glb` | 8: matas de pasto y hongos | 3.132 | 66,7 KB | ≤ 5.000 | bishion |
+| `models/naturaleza/rocas.glb` | 31: rocas, losas, peñas y un dolmen (con UV para la textura de roca) | 1.672 | 61,4 KB | ≤ 5.000 | bishion y Carlos_SR |
+| `models/fogata.glb` | leños (Akxme_17, sin su llama fija: la llama es animada), anillo de piedras (bishion) y lecho de brasas propio | 510 | 11,4 KB | ≤ 5.000 | Akxme_17 y bishion |
+
+Sin Draco por ahora: suman 1,74 MB de los 15 MB permitidos. Con piezas pequeñas el decodificador pesaría más que lo que ahorra; el personaje (1 MB, casi todo texturas) es el primero en el que conviene volver a medirlo en la optimización (sesión 12, HT-15).
 
 ## Sonido
 

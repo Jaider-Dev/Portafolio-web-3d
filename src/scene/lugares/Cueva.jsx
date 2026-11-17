@@ -11,6 +11,7 @@ import { ANTESALA, crearGaleria, GALERIA, PUERTA, puntoEnLaPared, ruido } from '
 import { texturaHalo } from '../efectos'
 import { Brasas } from './Fogata'
 import { Murales } from './Murales'
+import { Piedras } from '../naturaleza/Piedras'
 import { useMaterialPBR, uvPorCaja } from '../materiales'
 
 // Cueva de los murales (02 Z5, 06 §11): fachada de roca con una puerta en arco detrás de la cascada,
@@ -227,6 +228,9 @@ function LucesDeAntorchas({ cantidad }) {
   ))
 }
 
+// Rocas del kit de Blender alrededor de la boca (antes, dodecaedros)
+const PIEDRAS_PORTAL = ROCAS_PORTAL.map(([x, y, r]) => ({ posicion: [x, y, FACHADA.z + 0.25], escala: [r, r, r], rotacion: [x, y, x * y] }))
+
 export function Cueva() {
   const geometrias = useMemo(() => ({ fachada: uvPorCaja(crearFachada()), antesala: uvPorCaja(crearAntesala()), galeria: uvPorCaja(crearGaleria()), matcap: crearMatcap() }), [])
   const roca = useMaterialPBR('roca')
@@ -239,12 +243,7 @@ export function Cueva() {
       <mesh geometry={geometrias.fachada} castShadow receiveShadow name="cueva-fachada">
         <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>
-      {ROCAS_PORTAL.map(([x, y, r]) => (
-        <mesh key={`${x},${y}`} position={[x, y, FACHADA.z + 0.25]} rotation={[x, y, x * y]} castShadow receiveShadow>
-          <dodecahedronGeometry args={[r, 0]} />
-          <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} />
-        </mesh>
-      ))}
+      <Piedras nombre="cueva-portal" piedras={PIEDRAS_PORTAL} color={PALETA.roca} />
       <mesh geometry={geometrias.antesala} receiveShadow name="cueva-antesala">
         <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>

@@ -1,9 +1,9 @@
-# Prepara los dos personajes candidatos descargados de Sketchfab (17-nov-2026) para compararlos en la isla.
+# Prepara los dos personajes candidatos (17-nov-2026) para compararlos en la isla.
 # Uso:
 #   "C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --factory-startup --python blender/preparar_candidatos.py -- <2|3> [carpeta_de_vistas]
 #
-#   2 · "male character #2", de BELAZ (CC-BY 4.0): realista, con esqueleto de Character Creator y texturas.
-#   3 · "Guest male 3 - Medieval Fantasy Challenge", de tuturu (CC-BY 4.0): low poly, una textura, sin esqueleto.
+#   2 · realista, con esqueleto de Character Creator y texturas (descartado el 17-nov).
+#   3 · low poly, una textura, sin esqueleto.
 #
 # Pasos (pedidos por el autor el 17-nov): piel morena y cabello oscuro (recoloreando las texturas: se
 # conservan los detalles pintados), cabello largo (se estira la parte de atrás y de los lados del pelo

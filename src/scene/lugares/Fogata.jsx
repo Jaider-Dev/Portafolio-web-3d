@@ -6,10 +6,13 @@ import { useExperiencia } from '../../store/useExperiencia'
 import { cuantos } from '../../utils/calidad.js'
 import { PALETA } from '../paleta'
 import { useCalidad } from '../useCalidad'
+import { transicionHora } from '../ambiente/transicion'
 
 // Fogata viva (HU-14): llamas que respiran, brasas que suben y una columna de humo que se ve desde el
 // sendero y la cima (hito de orientación, 02 §7). La luz que la acompaña está en Ambiente (una sola
-// luz puntual con distancia limitada). Todo se mueve con senos suaves: sin destellos ni saltos
+// luz puntual con distancia limitada). Todo se mueve con senos suaves: sin destellos ni saltos.
+// De día está apagada (17-nov): llamas, brasas y humo crecen o se apagan con el cambio de hora
+// (transicionHora.t: 0 = mañana, 1 = noche), igual que su luz (Ambiente) y su sonido (Sonido)
 
 const LLAMAS = [
   { posicion: [0, 0.45, 0], escala: [0.32, 0.9, 0.32], color: PALETA.llama, fase: 0 },
@@ -31,10 +34,11 @@ const COLOR_BRASA = new THREE.Color(PALETA.fuego)
 function Llama({ posicion, escala, color, fase }) {
   const llama = useRef()
   useFrame(({ clock }) => {
-    if (useExperiencia.getState().ajustes.reducirMovimiento) return
-    const s = clock.elapsedTime
+    const encendido = transicionHora.t
+    const s = useExperiencia.getState().ajustes.reducirMovimiento ? 0 : clock.elapsedTime
     // Estira y encoge la llama con dos senos lentos; inclina un poco, como movida por el aire
-    llama.current.scale.y = escala[1] * (1 + 0.16 * Math.sin(s * 3.3 + fase) + 0.07 * Math.sin(s * 7.1 + fase * 2))
+    const vaiven = 1 + 0.16 * Math.sin(s * 3.3 + fase) + 0.07 * Math.sin(s * 7.1 + fase * 2)
+    llama.current.scale.set(escala[0] * encendido, escala[1] * vaiven * encendido, escala[2] * encendido)
     llama.current.rotation.z = 0.08 * Math.sin(s * 1.9 + fase)
   })
   return (
@@ -49,7 +53,8 @@ function Llama({ posicion, escala, color, fase }) {
 // Brasas: puntos que suben en bucle desde un fuego y se apagan con la altura. Con mezcla aditiva un
 // punto negro no suma nada: oscurecer su color de vértice equivale a desvanecerlo. Las usan la fogata
 // y las antorchas de la cueva (con menos brasas, más bajas y más juntas)
-export function Brasas({ cantidad = 26, altura = 3.2, abertura = 0.35, base = 0.4, tamano = 0.09, semilla = 31 }) {
+// `segunLaHora`: solo de noche (la fogata); las antorchas de la cueva siempre están encendidas
+export function Brasas({ cantidad = 26, altura = 3.2, abertura = 0.35, base = 0.4, tamano = 0.09, semilla = 31, segunLaHora = false }) {
   const puntos = useRef()
   const { geometria, semillas } = useMemo(() => {
     const nueva = new THREE.BufferGeometry()
@@ -68,13 +73,14 @@ export function Brasas({ cantidad = 26, altura = 3.2, abertura = 0.35, base = 0.
   useFrame(({ clock }) => {
     const reducir = useExperiencia.getState().ajustes.reducirMovimiento
     const s = reducir ? 0 : clock.elapsedTime
+    const encendido = segunLaHora ? transicionHora.t : 1
     const { position: posiciones, color: colores } = puntos.current.geometry.attributes
     semillas.forEach(({ inicio, velocidad, giro, radio }, i) => {
       const avance = (inicio + (s * velocidad) / altura) % 1 // 0 en la fogata, 1 arriba
       const angulo = giro + s * 0.8
       const abierto = radio * (1 + avance)
       posiciones.setXYZ(i, Math.cos(angulo) * abierto, base + avance * altura, Math.sin(angulo) * abierto)
-      const brillo = (1 - avance) ** 1.5
+      const brillo = (1 - avance) ** 1.5 * encendido
       colores.setXYZ(i, COLOR_BRASA.r * brillo, COLOR_BRASA.g * brillo, COLOR_BRASA.b * brillo)
     })
     posiciones.needsUpdate = true
@@ -98,7 +104,7 @@ function Humo() {
     instancias.current.forEach((puff, i) => {
       if (!puff) return
       const avance = (i / PUFFS + s * 0.06) % 1
-      const tamano = Math.sin(avance * Math.PI) * (0.3 + avance * 1.1) // crece y al final se deshace
+      const tamano = Math.sin(avance * Math.PI) * (0.3 + avance * 1.1) * transicionHora.t // crece y al final se deshace; sin fuego no hay humo
       // el viento lo inclina: se aleja de la fogata a medida que sube
       puff.position.set(Math.sin(avance * 5 + i) * 0.3 + avance * avance * 3, 1.2 + avance * ALTURA_HUMO, Math.cos(avance * 4 + i) * 0.3 + avance * 1.2)
       puff.scale.setScalar(Math.max(0.001, tamano))
@@ -114,10 +120,15 @@ function Humo() {
 }
 
 export function FuegoVivo({ position }) {
+  const fuego = useRef()
+  // Apagada del todo: el grupo no se dibuja (ni llamas ni humo de tamaño cero)
+  useFrame(() => {
+    fuego.current.visible = transicionHora.t > 0.01
+  })
   return (
-    <group position={position} name="fuego-vivo">
+    <group ref={fuego} position={position} name="fuego-vivo">
       {LLAMAS.map((llama) => <Llama key={llama.fase} {...llama} />)}
-      <Brasas />
+      <Brasas segunLaHora />
       <Humo />
     </group>
   )

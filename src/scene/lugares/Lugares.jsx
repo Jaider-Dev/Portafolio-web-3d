@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react'
-import { Clone, Instance, Instances, useCursor, useGLTF } from '@react-three/drei'
+import { Clone, useCursor, useGLTF } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 import { PANEL_DE_LUGAR, useExperiencia } from '../../store/useExperiencia'
 import { LUGARES } from '../../data/lugares.js'
 import { MUNDO } from '../../data/mundo.js'
 import { PALETA } from '../paleta'
 import { alturaDelTerreno, ESTANQUE, SENDERO_DENSO } from '../isla/terreno.js'
 import { FuegoVivo } from './Fogata'
+import { transicionHora } from '../ambiente/transicion'
 import { useMaterialPBR } from '../materiales'
+import { useKit } from '../naturaleza/kit.js'
+import { Piedras } from '../naturaleza/Piedras'
 import { Explorador } from '../personaje/Explorador'
 import { CANDIDATOS } from '../personaje/candidatos'
 
@@ -14,7 +19,6 @@ const RUTAS = {
   tienda: '/models/tienda.glb',
   fogata: '/models/fogata.glb',
   puente: '/models/puente.glb',
-
 }
 
 // Los GLB provisionales salen en gris; al cargarlos, cada material toma su color de la paleta por su
@@ -35,6 +39,21 @@ const roca = (posicion, radio, aplastada = 1, semilla = posicion[0] * 7 + posici
 })
 
 const pintados = new WeakSet()
+const materialesBrasa = new Set()
+const CENIZA = new THREE.Color(PALETA.cueva)
+const FUEGO = new THREE.Color(PALETA.fuego)
+
+// Lecho de la fogata (17-nov): de día ceniza apagada; de noche brasas que brillan (sigue la hora)
+function BrasasDelModelo() {
+  useFrame(() => {
+    const t = transicionHora.t
+    for (const material of materialesBrasa) {
+      material.color.lerpColors(CENIZA, FUEGO, t)
+      material.emissiveIntensity = 0.9 * t
+    }
+  })
+  return null
+}
 
 function usePintado(ruta) {
   const { scene } = useGLTF(ruta)
@@ -45,8 +64,8 @@ function usePintado(ruta) {
       if (!hex) return
       material.color.set(hex)
       if (material.name === 'brasa') {
-        material.emissive.set(PALETA.fuego) // las brasas brillan con luz propia, también de noche
-        material.emissiveIntensity = 0.9
+        material.emissive.set(PALETA.fuego) // las brasas brillan con luz propia (BrasasDelModelo)
+        materialesBrasa.add(material)
       }
     })
   }
@@ -59,9 +78,13 @@ function Modelo({ ruta, ...props }) {
 }
 
 // Menhires (02 §7): piedras hincadas irregulares y algo inclinadas, con piedras pequeñas en la base.
-// Antes eran obeliscos tallados (cilindro + punta) y parecían torres
+// Antes eran obeliscos tallados (cilindro + punta) y parecían torres; desde el 17-nov cada uno es una
+// roca distinta del kit de Blender, estirada en vertical
 // Cada menhir abre la sección de su lugar (17-nov): Sobre mí, habilidades, proyectos, trayectoria, visión
-function Menhir({ lugar, posicion, semilla }) {
+const PIEZA_MENHIR = ['pena-1', 'roca-8', 'pena-3', 'roca-15', 'pena-6']
+
+function Menhir({ lugar, posicion, semilla, pieza }) {
+  const geometrias = useKit('rocas')
   const azar = useMemo(() => generador(semilla), [semilla])
   const abrirPanel = useExperiencia((s) => s.abrirPanel)
   const viajar = useExperiencia((s) => s.viajar)
@@ -84,10 +107,10 @@ function Menhir({ lugar, posicion, semilla }) {
     <group name="menhir">
       <mesh position={[x, y + 1.05, z]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow
         onClick={activar} onPointerOver={(e) => { e.stopPropagation(); setEncima(true) }} onPointerOut={() => setEncima(false)}>
-        <dodecahedronGeometry args={[1, 0]} />
+        <primitive object={geometrias[pieza]} attach="geometry" />
         <meshStandardMaterial {...texturaRoca} color={encima ? PALETA.realce : PALETA.piedra} flatShading roughness={1} />
       </mesh>
-      <Rocas piedras={base} color={PALETA.piedra} />
+      <Piedras piedras={base} color={PALETA.piedra} />
     </group>
   )
 }
@@ -95,7 +118,7 @@ function Menhir({ lugar, posicion, semilla }) {
 export function Menhires() {
   return (
     <group name="menhires">
-      {LUGARES.map((lugar, i) => <Menhir key={lugar.id} lugar={lugar.id} posicion={lugar.menhir} semilla={3 + i * 11} />)}
+      {LUGARES.map((lugar, i) => <Menhir key={lugar.id} lugar={lugar.id} posicion={lugar.menhir} semilla={3 + i * 11} pieza={PIEZA_MENHIR[i]} />)}
     </group>
   )
 }
@@ -111,6 +134,7 @@ export function Campamento() {
       <Modelo ruta={RUTAS.tienda} position={MUNDO.tienda} rotation-y={haciaFogata} />
       <Modelo ruta={RUTAS.fogata} position={MUNDO.fogata} />
       <FuegoVivo position={MUNDO.fogata} />
+      <BrasasDelModelo />
       {MOSTRAR_EXPLORADOR && <ExploradorEnElCampamento />}
       {Array.from({ length: cantidad }, (_, i) => {
         const angulo = Math.PI / 4 + (i / cantidad) * Math.PI * 2
@@ -167,18 +191,15 @@ export function Puente() {
   return <Modelo ruta={RUTAS.puente} position={MUNDO.puente} name="puente" />
 }
 
+// Vado: losas planas del kit de rocas que asoman del agua
 export function Vado() {
   const { desde, hasta, y, z, piedras } = MUNDO.vado
-  return (
-    <group name="vado">
-      {Array.from({ length: piedras }, (_, i) => (
-        <mesh castShadow key={i} position={[desde + (i * (hasta - desde)) / (piedras - 1), y, z]}>
-          <cylinderGeometry args={[0.42, 0.5, 0.5, 7]} />
-          <meshStandardMaterial color={PALETA.piedra} flatShading />
-        </mesh>
-      ))}
-    </group>
-  )
+  const losas = useMemo(() => Array.from({ length: piedras }, (_, i) => ({
+    posicion: [desde + (i * (hasta - desde)) / (piedras - 1), y + 0.02, z + 0.12 * Math.sin(i * 2.3)],
+    escala: [0.5 + 0.05 * (i % 2), 0.24, 0.46],
+    rotacion: [0, i * 1.9, 0],
+  })), [desde, hasta, y, z, piedras])
+  return <Piedras nombre="vado" piedras={losas} color={PALETA.piedra} losas />
 }
 
 // Pseudoaleatorio con semilla: las piedras quedan igual en cada visita
@@ -216,30 +237,8 @@ function piedrasDelSendero() {
 
 export function Sendero() {
   const piedras = useMemo(() => piedrasDelSendero(), [])
-  const texturaRoca = useMaterialPBR('roca')
-  return (
-    <group name="sendero">
-      <Instances limit={piedras.length} castShadow receiveShadow>
-        <dodecahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial {...texturaRoca} color={PALETA.piedra} flatShading roughness={1} />
-        {piedras.map(({ posicion, rotacion, escala }) => <Instance key={posicion.join()} position={posicion} rotation={rotacion} scale={escala} />)}
-      </Instances>
-    </group>
-  )
+  return <Piedras nombre="sendero" piedras={piedras} color={PALETA.piedra} losas />
 }
-
-// Afloramiento de rocas: varias piedras facetadas apoyadas en el terreno alrededor de un punto
-function Rocas({ piedras, nombre, color = PALETA.roca }) {
-  const texturaRoca = useMaterialPBR('roca')
-  return (
-    <Instances limit={piedras.length} castShadow receiveShadow name={nombre}>
-      <dodecahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial {...texturaRoca} color={color} flatShading roughness={1} />
-      {piedras.map(({ posicion, escala, rotacion }) => <Instance key={posicion.join()} position={posicion} scale={escala} rotation={rotacion} />)}
-    </Instances>
-  )
-}
-
 
 // Cima: el mirador es un afloramiento de losas (antes, un cilindro) y el manantial, una roca
 export function Cima() {
@@ -257,8 +256,8 @@ export function Cima() {
   }
   return (
     <group name="cima">
-      <Rocas nombre="mirador" piedras={losas} color={PALETA.piedra} />
-      <Rocas nombre="manantial" piedras={[detras(1.9, 0, 0.9, 0.8), detras(1.6, 1.1, 0.55, 0.7), detras(1.6, -1.1, 0.5, 0.7)]} />
+      <Piedras nombre="mirador" piedras={losas} color={PALETA.piedra} />
+      <Piedras nombre="manantial" piedras={[detras(1.9, 0, 0.9, 0.8), detras(1.6, 1.1, 0.55, 0.7), detras(1.6, -1.1, 0.5, 0.7)]} />
     </group>
   )
 }

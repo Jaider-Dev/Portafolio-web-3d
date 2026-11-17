@@ -11,24 +11,26 @@ import { llenarFogata, llenarGrillos, llenarRuido } from './sintesis.js'
 // - Viento: global (THREE.Audio), con ráfagas lentas.
 // - Fogata, río y cascadas: posicionales (THREE.PositionalAudio). Suben al acercar la cámara; la cascada
 //   alta es la guía sonora hacia la cueva (02 §7).
-// - Grillos: solo de noche.
+// - Grillos y fogata: solo de noche (17-nov: de día la fogata está apagada y no suena).
 // Todo se sintetiza en el navegador (sintesis.js): no hay archivos de audio.
 
 // Fuentes posicionales: posición, tipo de sonido, volumen, distancia de referencia y filtro
 const FUENTES = [
-  { id: 'fogata', posicion: [MUNDO.fogata[0], 0.6, MUNDO.fogata[2]], sonido: 'fogata', volumen: 1.3, referencia: 4 },
+  { id: 'fogata', posicion: [MUNDO.fogata[0], 0.6, MUNDO.fogata[2]], sonido: 'fogata', volumen: 0, referencia: 4 }, // su volumen depende de la hora (VOLUMEN.fogata)
   { id: 'cascada-alta', posicion: [MUNDO.cascadaAlta.borde[0], 6, MUNDO.cascadaAlta.borde[2] + 0.5], sonido: 'rosa', volumen: 0.9, referencia: 5, filtro: ['lowpass', 2400] },
   { id: 'cascada-baja', posicion: [MUNDO.cascadaBaja[0], 0, MUNDO.cascadaBaja[2]], sonido: 'rosa', volumen: 0.6, referencia: 6, filtro: ['lowpass', 1800] },
   { id: 'rio-puente', posicion: MUNDO.puente, sonido: 'blanco', volumen: 0.35, referencia: 5, filtro: ['bandpass', 1100] },
   { id: 'rio-vado', posicion: [0, 0, MUNDO.vado.z], sonido: 'blanco', volumen: 0.35, referencia: 5, filtro: ['bandpass', 900] },
 ]
 
-// Volumen general del ambiente (13-nov: el autor lo pidió más bajo; antes era 1). Es un fondo, no protagonista
-const VOLUMEN_GENERAL = 0.45
+// Volumen general del ambiente (el autor lo pidió más bajo el 13-nov, de 1 a 0,45, y otra vez el 17-nov).
+// Es un fondo, no protagonista
+const VOLUMEN_GENERAL = 0.28
 
 const VOLUMEN = {
   viento: { manana: 0.16, noche: 0.1 },
   grillos: { manana: 0, noche: 0.05 },
+  fogata: { manana: 0, noche: 0.9 }, // apagada de día; de noche, más baja que antes (1,3)
 }
 
 function bufer(contexto, segundos, llenar) {
@@ -177,6 +179,8 @@ function Ambiente() {
     const t = oyente.context.currentTime
     ambiente.viento.gain.gain.setTargetAtTime(VOLUMEN.viento[hora], t, 1.2)
     ambiente.grillos.gain.gain.setTargetAtTime(VOLUMEN.grillos[hora], t, 1.2)
+    const fogata = ambiente.posicionales.find((p) => p.id === 'fogata').audio
+    fogata.gain.gain.setTargetAtTime(VOLUMEN.fogata[hora], t, 1.2) // se enciende y se apaga con la luz
   }, [hora, oyente, ambiente])
 
   if (!ambiente) return null

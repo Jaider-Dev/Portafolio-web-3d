@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "lint": "oxlint",
     "test": "node --test \"src/**/*.test.js\"",
-    "modelos:generar": "node scripts/generar-modelos.mjs",
     "modelos:revisar": "node scripts/revisar-modelos.mjs",
     "fuente:generar": "node scripts/generar-fuente-3d.mjs"
   },

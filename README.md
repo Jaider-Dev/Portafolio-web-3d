@@ -22,7 +22,6 @@ npm run dev
 | `npm run preview` | Sirve `dist/` para probarlo en local |
 | `npm run lint` | Oxlint |
 | `npm test` | Máquina de estados y coordenadas contra `02 · Mapa` §5 |
-| `npm run modelos:generar` | Regenera los GLB provisionales de `public/models` |
 | `npm run modelos:revisar` | Revisa triángulos y peso de cada GLB frente a su presupuesto |
 | `npm run fuente:generar` | Convierte Inter Bold a la fuente del texto 3D (`public/fonts/inter-700.typeface.json`), con tildes y eñe |
 
@@ -100,8 +99,10 @@ Peso que descarga la isla: **455 KB con gzip** (0,19 s a 20 Mbps, sin contar el 
 - **Versiones fijadas** a las del curso (`~`), porque las particularidades del stack se comprobaron con ellas.
 - **Vuelos de cámara propios** en `DirectorDeCamara`: la curva y la duración son exactas (3,5 s y 1,5 s). `setLookAt(…, true)` no permite fijar ninguna de las dos.
 - **Terreno calculado por función** (`scene/isla/terreno.js`) en lugar de un cilindro y cajas: permite tallar el río y la poza a su altura, y probar las alturas con `npm test`.
-- **Modelos:** la tienda y el puente ya salen de Blender (`blender/*.py`: el script es la receta y el `.blend` queda para seguir a mano); la fogata y el menhir siguen generados por código (`scripts/generar-modelos.mjs`).
-- **Personaje** (`src/scene/personaje/Explorador.jsx`): GLB con esqueleto y tres clips (`reposo`, `caminar`, `correr`) que se reproducen con `useAnimations`; `SkeletonUtils.clone` para poder clonarlo. Se prepara desde el modelo descargado con `blender/preparar_personaje.py` (unos 2,5 min): retopología a quads con QuadriFlow (a escala ×100, porque rechaza aristas muy cortas), color por zonas y horneado, pesos por distancia a los huesos (los de calor de Blender fallan con este modelo). En el modo panorámico espera junto a la fogata.
+- **Modelos:** todos salen de Blender (`blender/*.py`: el script es la receta y el `.blend` queda para seguir a mano). La tienda y el puente son propios; árboles, pasto, hongos, rocas y la fogata vienen de paquetes CC-BY de Sketchfab (CREDITS.md), separados en tres kits con `blender/kit_naturaleza.py -- arboles|detalles|rocas|fogata` (un `.blend` por kit en `blender/naturaleza/`).
+- **Naturaleza** (`src/scene/naturaleza/`): `Bosque` reparte los árboles por zonas (coníferas en la colina, copas anchas solo donde hay espacio) y `Detalles` siembra pasto, hongos y pedregales con semilla fija (sin pedregales entre el campamento y el puente). `ubicacion.js` decide dónde se puede sembrar (fuera del sendero, del agua, de los lugares y de las pendientes; probado en `ubicacion.test.js`). Cada pieza distinta es una sola `InstancedMesh`; la densidad baja con la calidad.
+- **Fogata según la hora:** de día está apagada (sin llamas, brasas, humo, luz ni sonido) y se enciende al caer la noche, con la misma transición que el resto del ambiente (`transicionHora`).
+- **Personaje** (`src/scene/personaje/Explorador.jsx`): GLB con esqueleto y tres clips (`reposo`, `caminar`, `correr`) que se reproducen con `useAnimations`; `SkeletonUtils.clone` para poder clonarlo. Se prepara con `blender/preparar_personaje.py` (unos 2,5 min): retopología a quads con QuadriFlow (a escala ×100, porque rechaza aristas muy cortas), color por zonas y horneado, pesos por distancia a los huesos (los de calor de Blender fallan con este modelo). En el modo panorámico espera junto a la fogata.
 - **Sonido sintetizado** (`src/scene/sonido/`): ruido filtrado y chasquidos generados con Web Audio, posicionales con `THREE.PositionalAudio`; silencio hasta pulsar el botón del HUD (HU-18).
 - **En móvil vertical** la distancia máxima de cámara supera los 60 m, porque con ese límite la isla no cabe a lo ancho.
 

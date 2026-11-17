@@ -40,7 +40,7 @@ export const AMBIENTES = {
     astro: '#ffd9a0', // disco del sol
     luz: { color: '#ffd9a0', intensidad: 2.6, posicion: [-45, 30, 30] }, // sol bajo y lateral (05 §7)
     cielo: { color: '#bcd9f2', suelo: '#5d6b3a', intensidad: 1.15 }, // relleno: cielo arriba, rebote de la hierba abajo
-    fogata: 0.8, // de día casi no se nota
+    fogata: 0, // de día la fogata está apagada (17-nov): se enciende al caer la noche
     estrellas: 0,
   },
   noche: {
