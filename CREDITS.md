@@ -27,7 +27,7 @@ Paquetes descargados de [Sketchfab](https://sketchfab.com) con licencia **Creati
 
 | Archivo | Piezas | Triángulos | Peso | Presupuesto | Sale de |
 |---|---|---|---|---|---|
-| `models/naturaleza/arboles.glb` | 15 árboles grandes (pinos, abetos, álamos, robles, frondosos, retorcidos y el paraguas) | 12.667 | 246,7 KB | ≤ 15.000 | bishion y Carlos_SR |
+| `models/naturaleza/arboles.glb` | 15 árboles grandes (pinos, abetos, álamos, robles, frondosos, retorcidos y el paraguas, reducido a 1.425) | 12.169 | 237,9 KB | ≤ 15.000 | bishion y Carlos_SR |
 | `models/naturaleza/detalles.glb` | 8: matas de pasto y hongos | 3.132 | 66,7 KB | ≤ 5.000 | bishion |
 | `models/naturaleza/rocas.glb` | 31: rocas, losas, peñas y un dolmen (con UV para la textura de roca) | 1.672 | 61,4 KB | ≤ 5.000 | bishion y Carlos_SR |
 | `models/fogata.glb` | leños (Akxme_17, sin su llama fija: la llama es animada), anillo de piedras (bishion) y lecho de brasas propio | 510 | 11,4 KB | ≤ 5.000 | Akxme_17 y bishion |
@@ -36,7 +36,11 @@ Sin Draco por ahora: suman 1,74 MB de los 15 MB permitidos. Con piezas pequeñas
 
 ## Sonido
 
-El ambiente sonoro (viento, fogata, río, cascadas y grillos) **se sintetiza en el navegador** con Web Audio (`src/scene/sonido/sintesis.js`): no hay archivos de audio ni licencias de terceros.
+El ambiente sonoro (viento, fogata, río, cascadas y grillos) **se sintetiza en el navegador** con Web Audio (`src/scene/sonido/sintesis.js`).
+
+| Archivo | Duración | Peso | Origen |
+|---|---|---|---|
+| `audio/musica.mp3` | 2 min 22 s, en bucle | 2,2 MB (MP3 de 128 kbps) | Música de flauta aportada por el autor (17-nov-2026). Por el nombre del archivo original (`leberch-flute-587281.mp3`) viene de **Pixabay**, del usuario *leberch* (pista 587281): la Licencia de contenido de Pixabay permite usarla sin atribución obligatoria. **Pendiente de confirmar en su página.** Recomprimida desde 256 kbps con `blender/musica.py` (el original está en `blender/fuente/`) |
 
 ## Fuentes (provisionales hasta PL-04)
 

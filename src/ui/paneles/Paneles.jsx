@@ -6,6 +6,7 @@ import { PERFIL, VISION } from '../../data/perfil'
 import { PROYECTOS } from '../../data/proyectos'
 import { TEXTOS } from '../../data/textos'
 import { TRAYECTORIA } from '../../data/trayectoria'
+import { useIdioma } from '../../store/idioma'
 import { useExperiencia } from '../../store/useExperiencia'
 import { OPCIONES } from '../../utils/calidad.js'
 import { esMarcador } from '../../utils/marcadores'
@@ -85,15 +86,27 @@ function Contacto() {
   )
 }
 
-// Ajustes (HU-17): de momento, la calidad gráfica. Un grupo de radios nativos: se recorre con las
+// Ajustes (HU-17): calidad gráfica e idioma (P-7). Un grupo de radios nativos: se recorre con las
 // flechas, el lector anuncia "1 de 4" y la opción marcada, sin ARIA extra
 function Ajustes() {
   const A = TEXTOS.ajustes
   const calidad = useExperiencia((s) => s.ajustes.calidad)
   const calidadAuto = useExperiencia((s) => s.calidadAuto)
   const cambiarAjuste = useExperiencia((s) => s.cambiarAjuste)
+  const idioma = useIdioma((s) => s.idioma)
+  const elegirIdioma = useIdioma((s) => s.elegir)
   return (
     <Panel lugar={A.lugar} seccion={A.seccion}>
+      {/* Cada idioma con su propio nombre (y su lang): se reconoce sin saber el otro */}
+      <fieldset className="opciones">
+        <legend>{TEXTOS.idioma.titulo}</legend>
+        {[['es', 'Español'], ['en', 'English']].map(([codigo, nombre]) => (
+          <label key={codigo} className="opcion" lang={codigo}>
+            <input type="radio" name="idioma" value={codigo} checked={idioma === codigo} onChange={() => elegirIdioma(codigo)} />
+            <span><strong>{nombre}</strong></span>
+          </label>
+        ))}
+      </fieldset>
       <fieldset className="opciones">
         <legend>{A.calidad}</legend>
         {OPCIONES.map((opcion) => (

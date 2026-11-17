@@ -3,6 +3,7 @@ import { TEXTOS } from '../data/textos'
 import { RUTA_CLASICA } from '../utils/rutas'
 import { hayWebGL } from '../utils/webgl'
 import { BotonHora } from '../ui/BotonHora'
+import { BotonIdioma } from '../ui/BotonIdioma'
 
 const T = TEXTOS.clasico
 
@@ -17,6 +18,7 @@ export function MenuClasico() {
         </ul>
       </nav>
       <div className="clasico-herramientas">
+        <BotonIdioma />
         <BotonHora />
         {hayWebGL() ? (
           <div className="selector" role="group" aria-label={T.selector}>

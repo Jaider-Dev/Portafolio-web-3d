@@ -1,3 +1,4 @@
+import { useIdioma } from '../store/idioma'
 import { Ambiente } from './ambiente/Ambiente'
 import { Nubes } from './ambiente/Nubes'
 import { Particulas } from './ambiente/Particulas'
@@ -13,6 +14,8 @@ import { Sonido } from './sonido/Sonido'
 
 // Composición de la isla (06 §7). La luz depende de la hora del día: mañana o noche (D12, HU-37)
 export function Mundo() {
+  // Lo que muestra texto dentro de la escena (rótulos del poste) se vuelve a crear al cambiar de idioma
+  const idioma = useIdioma((s) => s.idioma)
   return (
     <>
       <Ambiente />
@@ -30,7 +33,7 @@ export function Mundo() {
       <Menhires />
       <Faroles />
       <Letrero />
-      <Poste />
+      <Poste key={idioma} />
       <Particulas />
       <Sonido />
     </>

@@ -5,6 +5,7 @@ import { PantallaDeCarga } from './ui/PantallaDeCarga'
 import { RedirigirSinWebGL } from './ui/RedirigirSinWebGL'
 import { RUTA_CLASICA } from './utils/rutas'
 import './store/hora' // pone data-hora en <html> antes del primer render: sin parpadeo de tema
+import './store/idioma' // aplica el idioma guardado (o el del navegador) antes del primer render
 import './ui/base.css'
 
 // Cada rama descarga solo su chunk: la versión clásica nunca baja three, R3F ni Drei (06 §6)

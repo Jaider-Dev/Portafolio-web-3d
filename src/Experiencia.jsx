@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useState } from 'react'
+import { Component, Fragment, lazy, Suspense, useEffect, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { useProgress } from '@react-three/drei'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -10,6 +10,7 @@ import { Calidad } from './scene/Calidad'
 import { Mundo } from './scene/Mundo'
 import { useCalidad } from './scene/useCalidad'
 import { useExperiencia } from './store/useExperiencia'
+import { useIdioma } from './store/idioma'
 import { HUD } from './ui/HUD'
 import { Intro } from './ui/Intro'
 import { MenuViaje } from './ui/MenuViaje'
@@ -83,6 +84,13 @@ export default function Experiencia() {
   const reducirMovimiento = useExperiencia((s) => s.ajustes.reducirMovimiento)
   const { progress } = useProgress()
   const { perfil } = useCalidad()
+  // Cambiar de idioma reescribe los textos (i18n/aplicar.js) y vuelve a montar la interfaz HTML con ellos.
+  // El canvas no se toca: la isla, la cámara y el estado siguen igual
+  const idioma = useIdioma((s) => s.idioma)
+
+  useEffect(() => {
+    document.querySelector('.experiencia canvas')?.setAttribute('aria-label', TEXTOS.canvas(PERFIL.nombre))
+  }, [idioma])
 
   return (
     <main className="experiencia" data-reducir={reducirMovimiento || undefined}>
@@ -108,6 +116,7 @@ export default function Experiencia() {
       </LimiteDeError>
 
       <SincronizarUrl />
+      <Fragment key={idioma}>
       {fase === 'cargando' && <PantallaDeCarga porcentaje={Math.round(progress)} />}
       {fase === 'fallback' && <PantallaDeError />}
       <Intro />
@@ -115,6 +124,7 @@ export default function Experiencia() {
       <Paneles />
       <MenuViaje />
       <Notificaciones />
+      </Fragment>
     </main>
   )
 }

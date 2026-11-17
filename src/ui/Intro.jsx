@@ -5,6 +5,7 @@ import { TEXTOS } from '../data/textos'
 import { useExperiencia } from '../store/useExperiencia'
 import { RUTA_CLASICA } from '../utils/rutas'
 import { BotonHora } from './BotonHora'
+import { BotonIdioma } from './BotonIdioma'
 
 // Escena E1: nombre, rol y accesos directos sobre el plano aéreo (HU-03)
 export function Intro() {
@@ -34,7 +35,9 @@ export function Intro() {
           <Link className="boton" to={RUTA_CLASICA}>{TEXTOS.intro.clasico}</Link>
         </div>
       </section>
-      {/* La hora se elige desde el primer momento: la intro ya muestra la isla */}
+      {/* La hora y el idioma se eligen desde el primer momento: la intro ya muestra la isla y es lo
+          primero que lee quien llega (después, el idioma está en Ajustes) */}
+      {fase === 'intro' && <BotonIdioma className="esquina-idioma" />}
       {fase === 'intro' && <BotonHora className="esquina-hora" />}
     </>
   )

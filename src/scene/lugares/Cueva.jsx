@@ -11,6 +11,7 @@ import { ANTESALA, crearGaleria, GALERIA, PUERTA, puntoEnLaPared, ruido } from '
 import { texturaHalo } from '../efectos'
 import { Brasas } from './Fogata'
 import { Murales } from './Murales'
+import { useIdioma } from '../../store/idioma'
 import { Piedras } from '../naturaleza/Piedras'
 import { useMaterialPBR, uvPorCaja } from '../materiales'
 
@@ -232,6 +233,7 @@ function LucesDeAntorchas({ cantidad }) {
 const PIEDRAS_PORTAL = ROCAS_PORTAL.map(([x, y, r]) => ({ posicion: [x, y, FACHADA.z + 0.25], escala: [r, r, r], rotacion: [x, y, x * y] }))
 
 export function Cueva() {
+  const idioma = useIdioma((s) => s.idioma)
   const geometrias = useMemo(() => ({ fachada: uvPorCaja(crearFachada()), antesala: uvPorCaja(crearAntesala()), galeria: uvPorCaja(crearGaleria()), matcap: crearMatcap() }), [])
   const roca = useMaterialPBR('roca')
   const { nivel } = useCalidad()
@@ -278,7 +280,7 @@ export function Cueva() {
       {ANTORCHAS.map(({ posicion, giro, indice }) => <Antorcha key={indice} posicion={posicion} giro={giro} indice={indice} />)}
       {/* key por cantidad: si cambia la calidad se rehacen las luces (y se recompilan los shaders) */}
       <LucesDeAntorchas key={luces} cantidad={luces} />
-      <Murales />
+      <Murales key={idioma} /* sus rótulos dependen del idioma */ />
       {/* Repisa de piedras que se pierde tras la cortina (02 Z4) */}
       {[0, 1, 2, 3, 4].map((i) => (
         <mesh castShadow key={i} position={[MUNDO.repisa.desde + i, MUNDO.repisa.y + 0.08, MUNDO.repisa.z]}>

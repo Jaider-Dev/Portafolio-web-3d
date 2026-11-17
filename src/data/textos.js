@@ -1,4 +1,4 @@
-// Textos de la interfaz (03 · Guion, escenas y §7). Preparados para un segundo idioma (P-7)
+// Textos de la interfaz (03 · Guion, escenas y §7). En español; el inglés está en i18n/en.js (P-7)
 export const TEXTOS = {
   titulo: 'Bitácora',
   carga: {
@@ -51,6 +51,12 @@ export const TEXTOS = {
       baja: { titulo: 'Baja', detalle: 'Sin sombras: para equipos modestos y móviles' },
     },
     ahora: (nivel) => `Ahora mismo: ${nivel}`,
+  },
+  // El botón de idioma se rotula en el idioma al que lleva: quien no lee español entiende "EN"
+  idioma: {
+    titulo: 'Idioma',
+    cambiar: 'Change language to English',
+    corto: 'EN',
   },
   hora: {
     nombre: 'Modo noche', // con aria-pressed: "Modo noche, activado / desactivado"

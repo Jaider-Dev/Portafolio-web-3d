@@ -12,7 +12,9 @@ import { llenarFogata, llenarGrillos, llenarRuido } from './sintesis.js'
 // - Fogata, río y cascadas: posicionales (THREE.PositionalAudio). Suben al acercar la cámara; la cascada
 //   alta es la guía sonora hacia la cueva (02 §7).
 // - Grillos y fogata: solo de noche (17-nov: de día la fogata está apagada y no suena).
-// Todo se sintetiza en el navegador (sintesis.js): no hay archivos de audio.
+// - Música (17-nov): una flauta en bucle, de día y de noche, por debajo del ambiente.
+// El ambiente se sintetiza en el navegador (sintesis.js); la música es el único archivo de audio
+// (public/audio/musica.mp3, ver CREDITS.md). Todo se silencia con el mismo botón del HUD.
 
 // Fuentes posicionales: posición, tipo de sonido, volumen, distancia de referencia y filtro
 const FUENTES = [
@@ -31,6 +33,24 @@ const VOLUMEN = {
   viento: { manana: 0.16, noche: 0.1 },
   grillos: { manana: 0, noche: 0.05 },
   fogata: { manana: 0, noche: 0.9 }, // apagada de día; de noche, más baja que antes (1,3)
+}
+
+// Música de fondo: igual de día y de noche. El autor la pidió (17-nov) un poco por encima del ambiente,
+// solo un poco: protagonista, pero sin tapar el río ni la fogata
+const MUSICA = { ruta: '/audio/musica.mp3', volumen: 0.6 }
+
+// Un <audio> que se reproduce en streaming (no se descarga entero antes de sonar) y entra al mismo
+// grafo de Web Audio que el ambiente: así el volumen general y el silencio la afectan igual
+function crearMusica(oyente) {
+  const elemento = new Audio(MUSICA.ruta)
+  elemento.loop = true
+  elemento.preload = 'auto'
+  const musica = new THREE.Audio(oyente).setMediaElementSource(elemento)
+  musica.gain.gain.value = 0 // entra de forma gradual
+  musica.gain.gain.setTargetAtTime(MUSICA.volumen, oyente.context.currentTime, 1.5)
+  // Si el navegador aún no permite sonar (sin interacción), se reintenta en el primer clic o tecla
+  elemento.play().catch(() => {})
+  return { musica, elemento }
 }
 
 function bufer(contexto, segundos, llenar) {
@@ -123,7 +143,7 @@ function crearAmbiente(oyente) {
       f.disconnect()
     }
   }
-  return { viento, grillos, posicionales, detener }
+  return { viento, grillos, posicionales, detener, musica: crearMusica(oyente) }
 }
 
 function Ambiente() {
@@ -147,6 +167,15 @@ function Ambiente() {
     return () => {
       camara.remove(oyente)
       creado.detener()
+      // La música: se para el <audio> y se suelta su nodo (como el resto del grafo)
+      creado.musica.elemento.pause()
+      creado.musica.elemento.removeAttribute('src')
+      creado.musica.elemento.load()
+      try {
+        creado.musica.musica.disconnect()
+      } catch {
+        // ya desconectada
+      }
       setAmbiente(null)
     }
   }, [camara, oyente])
@@ -164,6 +193,20 @@ function Ambiente() {
       window.removeEventListener('keydown', reanudar)
     }
   }, [oyente])
+
+  // La música no puede empezar sola si el visitante aún no ha tocado la página (política de
+  // reproducción automática): arranca con su primer clic o tecla
+  useEffect(() => {
+    const elemento = ambiente?.musica.elemento
+    if (!elemento?.paused) return undefined
+    const tocar = () => elemento.play().catch(() => {})
+    window.addEventListener('pointerdown', tocar, { once: true })
+    window.addEventListener('keydown', tocar, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', tocar)
+      window.removeEventListener('keydown', tocar)
+    }
+  }, [ambiente])
 
   // Con la pestaña oculta la isla no se dibuja: tampoco debe sonar
   useEffect(() => {

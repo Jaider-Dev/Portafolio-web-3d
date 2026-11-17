@@ -200,6 +200,26 @@ def terminar(o, modo, valor=1.0, rocas=False):
     return o
 
 
+def decimar(o, maximo):
+    """Presupuesto de HU-11 (≤ 1.500 triángulos por árbol): reduce la malla con Decimate (colapso) hasta
+    quedar por debajo y vuelve a unir triángulos en quads"""
+    def tris():
+        return sum(len(p.vertices) - 2 for p in o.data.polygons)
+    if tris() <= maximo:
+        return o
+    mod = o.modifiers.new('decimar', 'DECIMATE')
+    mod.ratio = maximo / tris() * 0.95
+    seleccionar([o])
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.tris_convert_to_quads(face_threshold=math.radians(40), shape_threshold=math.radians(40), vcols=True)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    for p in o.data.polygons:
+        p.use_smooth = False
+    return o
+
+
 def material_kit(nombre, color_por_vertice):
     m = bpy.data.materials.new(nombre)
     m.use_nodes = True
@@ -269,7 +289,7 @@ def kit_arboles():
     for grupo, nombre, alto in (('Mball.016', 'arbol-paraguas', 7.0),):
         for o in grupos[grupo]:
             pintar(o)
-        piezas.append(terminar(unir(grupos[grupo], nombre), 'alto', alto))
+        piezas.append(decimar(terminar(unir(grupos[grupo], nombre), 'alto', alto), 1500))
     for resto in [o for o in escena.objects if o not in piezas]:
         bpy.data.objects.remove(resto)
 

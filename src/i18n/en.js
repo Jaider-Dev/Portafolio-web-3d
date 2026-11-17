@@ -1,0 +1,247 @@
+// Traducción al inglés (P-7, 17-nov-2026). Solo lo que cambia: aplicar.js lo superpone al español.
+// Los arreglos de src/data (lugares, proyectos, habilidades, trayectoria) se traducen por id.
+export const EN = {
+  TEXTOS: {
+    titulo: 'Bitácora',
+    carga: {
+      progreso: (porcentaje) => `Charting the island map… ${porcentaje} %`,
+      frases: ['Stoking the campfire…', 'Sharpening the runes…', 'Lighting the torches…', 'Filling the river…'],
+      pregunta: 'Prefer the classic version?',
+      enlace: 'Open 2D portfolio',
+    },
+    error: {
+      mensaje: 'Something got lost on the way and did not load.',
+      reintentar: 'Try again',
+      clasico: 'Open classic portfolio',
+    },
+    sinWebgl: {
+      mensaje: 'Your browser cannot show the 3D island. Taking you to the classic portfolio.',
+      enlace: 'Open classic portfolio',
+    },
+    intro: {
+      frase: 'This island is my logbook. Explore it or go straight to what you are looking for.',
+      comenzar: 'Start exploring',
+      contacto: 'Contact',
+      clasico: 'Classic portfolio',
+    },
+    hud: {
+      viajar: 'Travel (M)',
+      viajarCorto: 'Travel',
+      contacto: 'Contact',
+      clasico: 'Classic portfolio',
+      clasicoCorto: 'Classic',
+      clasicoAccesible: 'Classic portfolio (2D version)',
+      abrirSobreMi: (nombre, rol) => `${nombre}, ${rol}. Open About me`,
+      region: 'Island shortcuts',
+    },
+    murales: {
+      destacado: 'Featured project',
+      proxima: 'Next expedition',
+      pintando: 'Still painting it',
+      lugar: 'Cave of murals',
+      verClasico: 'See it in the classic version',
+    },
+    ajustes: {
+      abrir: 'Settings',
+      lugar: 'Backpack',
+      seccion: 'Settings',
+      calidad: 'Graphics quality',
+      opciones: {
+        auto: { titulo: 'Automatic', detalle: 'Adjusts itself if the island runs slowly' },
+        alta: { titulo: 'High', detalle: 'Fine shadows and every detail' },
+        media: { titulo: 'Medium', detalle: 'Simpler shadows and fewer particles' },
+        baja: { titulo: 'Low', detalle: 'No shadows: for modest computers and phones' },
+      },
+      ahora: (nivel) => `Right now: ${nivel}`,
+    },
+    idioma: {
+      titulo: 'Language',
+      cambiar: 'Cambiar el idioma a español',
+      corto: 'ES',
+    },
+    hora: {
+      nombre: 'Night mode',
+      pista: { manana: 'Switch to night', noche: 'Switch to morning' },
+    },
+    sonido: {
+      nombre: 'Sound',
+      activar: 'Turn sound on',
+      silenciar: 'Mute',
+    },
+    menu: {
+      titulo: 'Travel to…',
+      cerrar: 'Close',
+    },
+    panel: {
+      cerrar: 'Close',
+    },
+    sobreMi: {
+      lugar: 'Base camp',
+      seccion: 'About me',
+      proyectos: 'See my projects',
+      contactar: 'Contact me',
+    },
+    contacto: {
+      lugar: "Explorer's journal",
+      seccion: 'Contact',
+      invitacion: 'If you want to work with me, ask me something or just say hi, this is where to find me.',
+      correo: 'Email',
+      copiar: 'Copy email',
+      copiado: 'Email copied',
+      errorCopia: 'Could not copy it: select the email by hand',
+      cv: 'Download CV',
+      linkedin: 'LinkedIn',
+      github: 'GitHub',
+      clasico: 'Classic portfolio',
+      pendiente: 'pending',
+      pestanaNueva: '(opens in a new tab)',
+    },
+    poste: {
+      linkedin: 'LinkedIn',
+      github: 'GitHub',
+      clasico: 'Classic portfolio',
+      cv: 'CV',
+    },
+    notificacion: {
+      descubriste: (nombre, seccion) => `You discovered: ${nombre} · ${seccion}`,
+      enlacePendiente: (destino) => `${destino}: link pending`,
+      calidad: (nivel) => `Quality set to ${nivel} so the island runs smoothly`,
+    },
+    canvas: (nombre) => `Interactive 3D island of ${nombre}'s portfolio. Use the travel menu to reach each section.`,
+    clasico: {
+      saltar: 'Skip to content',
+      navegacion: 'Portfolio sections',
+      version2d: 'Classic version (2D)',
+      version3d: '3D island',
+      selector: 'Version',
+      sinWebgl: 'The 3D island is not available in this browser.',
+      verEnIsla: 'See it on the island',
+      verProyectos: 'See projects',
+      contacto: 'Contact',
+      secciones: {
+        'sobre-mi': { titulo: 'About me', lugar: 'Base camp' },
+        habilidades: { titulo: 'Skills', lugar: 'Ford of runes' },
+        proyectos: { titulo: 'Projects', lugar: 'Cave of murals' },
+        trayectoria: { titulo: 'Journey', lugar: 'Trail of cairns' },
+        vision: { titulo: 'Vision', lugar: 'Spring summit' },
+        contacto: { titulo: 'Contact and CV', lugar: "Explorer's journal" },
+      },
+      niveles: { diario: 'I use daily', trabajado: 'I have worked with', aprendiendo: 'I am learning' },
+      vision: { busco: 'What I am looking for', intereses: 'What interests me', disponibilidad: 'Availability', proximo: 'Next expedition' },
+      caso: {
+        reto: 'The challenge',
+        papel: 'My role',
+        tecnologias: 'What I built it with',
+        logro: 'What I achieved',
+        codigo: 'See code',
+        demo: 'See demo',
+        volver: 'Back to projects',
+        mural: 'See its mural on the island',
+        anterior: 'Previous',
+        siguiente: 'Next project',
+        noEncontrado: 'I could not find that project.',
+      },
+    },
+  },
+
+  PERFIL: {
+    rol: 'Full stack developer',
+    resumen:
+      'I am a full stack software developer. I work with Java, Spring Boot, Angular and TypeScript, and I have '
+      + 'built features for a multi-tenant academic information system in production, with microservices and '
+      + 'micro-frontends. I like to understand why things work: I learn on my own and I am now going deeper into '
+      + 'AI and Machine Learning fundamentals, and into 3D graphics for the web, like this island.',
+    datos: [
+      'Santiago de Cali, Colombia',
+      'Studying Systems Engineering at Universidad del Valle',
+      'Software Development Technologist (Univalle, 2025)',
+      'Native Spanish · upper-intermediate English',
+    ],
+  },
+
+  VISION: {
+    busco: 'A team where I can build full stack products end to end, from the API to the interface, and keep growing as an engineer.',
+    intereses: 'Microservice architecture, interfaces with Angular and React, AI and Machine Learning, and 3D graphics on the web.',
+    disponibilidad: 'Open to talking about opportunities: write to my email.',
+    proyectoActual: 'Learning AI and Machine Learning',
+  },
+
+  LUGARES: {
+    campamento: { nombre: 'Base camp', seccion: 'About me' },
+    rio: { nombre: 'Ford of runes', seccion: 'Skills' },
+    cueva: { nombre: 'Cave of murals', seccion: 'Projects' },
+    sendero: { nombre: 'Trail of cairns', seccion: 'Journey' },
+    cima: { nombre: 'Spring summit', seccion: 'Vision' },
+  },
+
+  HABILIDADES: {
+    frontend: { categoria: 'Frontend' },
+    '3d': { categoria: '3D and web graphics', aprendiendo: ['GLSL shaders', 'WebGPU and TSL'] },
+    lenguajes: { categoria: 'Languages' },
+    herramientas: {
+      categoria: 'Tools and methodologies',
+      trabajado: ['AWS (SSM)', 'AI coding assistants (Copilot, Cursor, ChatGPT, Claude)'],
+    },
+    backend: {
+      categoria: 'Backend and data',
+      diario: ['Spring Boot 3.4', 'REST APIs', 'Microservices'],
+      trabajado: ['API Gateway', 'Feign Client', 'Eureka', 'Multi-tenant architecture', 'PostgreSQL', 'MySQL', 'SQLite'],
+      aprendiendo: ['AI and Machine Learning fundamentals'],
+    },
+  },
+
+  TRAYECTORIA: {
+    'mision-tic': {
+      titulo: 'Misión TIC: programming and web applications',
+      lugar: 'MinTIC and Universidad del Norte',
+      logro: '1,400 hours of training: programming fundamentals (600 h) and web applications (800 h).',
+    },
+    tecnologia: {
+      titulo: 'Software Development Technologist',
+      lugar: 'Universidad del Valle',
+      logro: 'Projects such as BUCLICK (Spring Boot) and the peer review system (Django).',
+    },
+    gtc: {
+      titulo: 'Full Stack Development Analyst',
+      lugar: 'GTC Corporation (June to October)',
+      logro: 'Full stack features for SESCOL, a multi-tenant academic SIS/ERP in production.',
+    },
+    ingenieria: {
+      titulo: 'Systems Engineering (in progress)',
+      lugar: 'Universidad del Valle',
+      logro: 'This 3D portfolio was born in the Web 3D Experience Design course.',
+    },
+  },
+
+  PROYECTOS: {
+    sescol: {
+      titulo: 'SESCOL · academic SIS/ERP',
+      resumen: 'Multi-tenant academic information system in production, at GTC Corporation (2026).',
+      problema: 'Managing the student life cycle (enrollment, grades and academic record) for several institutions at once, following the SUECO IES guidelines.',
+      rol: 'Full stack development analyst: backend and frontend features, API consumption through an API Gateway, microservice integration and requirements analysis turned into technical stories, in a Scrum team.',
+      tecnologias: ['Java 21', 'Spring Boot 3.4', 'Microservices', 'Feign Client', 'Angular', 'TypeScript', 'Module Federation'],
+      resultado: 'Dynamic interfaces that reuse the project component library and the cross-cutting audit, security and parameter services.',
+    },
+    buclick: {
+      resumen: 'University wellbeing management: food scholarships, meal bookings and appointments.',
+      problema: 'Wellbeing processes (scholarships, meals and appointments) needed a single system instead of separate procedures.',
+      rol: 'I built REST APIs with Java and Spring Boot and took part in the MySQL data modeling.',
+      resultado: 'Endpoints for scholarships, bookings and appointments, validated in Postman.',
+    },
+    'evaluacion-pares': {
+      titulo: 'Peer review',
+      resumen: 'System to manage users and peer reviews between teachers.',
+      problema: 'Organizing reviews between teachers with users, roles and searchable results.',
+      rol: 'I implemented the backend with Python and Django and designed the relational data model.',
+      tecnologias: ['Python', 'Django', 'PostgreSQL', 'REST APIs'],
+      resultado: 'Backend with user and review management, and REST APIs to integrate it.',
+    },
+    bitacora: {
+      titulo: 'Bitácora · 3D portfolio',
+      resumen: 'This portfolio: a floating island you explore to get to know my work.',
+      problema: 'Showing my profile in a memorable way without anyone taking more than 60 seconds to reach my projects or my contact.',
+      rol: 'Full design, modeling and development: concept, map, Jira backlog, Blender models and the React Three Fiber scene.',
+      resultado: 'An island with morning and night, music and synthesized sound, a cave with murals, adaptive graphics quality and an accessible 2D classic version.',
+    },
+  },
+}
