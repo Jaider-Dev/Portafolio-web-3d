@@ -110,6 +110,18 @@ def soldar(o, distancia):
     bm.free()
 
 
+def orientar(o):
+    """Caras hacia afuera en las piezas cerradas. Algún paquete trae escalas espejadas: al pasarlas a la
+    geometría las caras quedan al revés y three.js (que dibuja solo la cara delantera) muestra el
+    interior de la roca. En piezas abiertas (pisos de un pino, briznas) no hay "afuera": no se tocan"""
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    if not any(e.is_boundary for e in bm.edges):
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(o.data)
+    bm.free()
+
+
 def seleccionar(objs, activo=None):
     for s in escena.objects:
         s.select_set(False)
@@ -161,6 +173,7 @@ def terminar(o, modo, valor=1.0, rocas=False):
         o.data.transform(Matrix.Diagonal((2 / d.x, 2 / d.y, 2 / d.z, 1)) @ Matrix.Translation(-centro))
     o.location = (0, 0, 0)
     soldar(o, 1e-4)
+    orientar(o)
     for capa in list(o.data.uv_layers):
         o.data.uv_layers.remove(capa)
     # Quads: une pares de triángulos casi coplanarios sin mezclar colores
