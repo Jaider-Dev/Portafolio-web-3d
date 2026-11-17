@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Clone, useCursor, useGLTF } from '@react-three/drei'
+import { Clone, Instance, Instances, useCursor, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { PANEL_DE_LUGAR, useExperiencia } from '../../store/useExperiencia'
@@ -85,7 +85,6 @@ const PIEZA_MENHIR = ['pena-1', 'roca-8', 'pena-3', 'roca-15', 'pena-6']
 
 function Menhir({ lugar, posicion, semilla, pieza }) {
   const geometrias = useKit('rocas')
-  const azar = useMemo(() => generador(semilla), [semilla])
   const abrirPanel = useExperiencia((s) => s.abrirPanel)
   const viajar = useExperiencia((s) => s.viajar)
   const [encima, setEncima] = useState(false)
@@ -99,10 +98,6 @@ function Menhir({ lugar, posicion, semilla, pieza }) {
   }
   const [x, , z] = posicion
   const y = alturaDelTerreno(x, z)
-  const base = useMemo(() => Array.from({ length: 3 }, (_, i) => {
-    const a = (i / 3) * Math.PI * 2 + azar() * 1.5
-    return roca([x + Math.cos(a) * 0.6, y + 0.05, z + Math.sin(a) * 0.6], 0.22 + azar() * 0.12, 0.6, semilla + i)
-  }), [azar, x, y, z, semilla])
   return (
     <group name="menhir">
       <mesh position={[x, y + 1.05, z]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow
@@ -110,15 +105,31 @@ function Menhir({ lugar, posicion, semilla, pieza }) {
         <primitive object={geometrias[pieza]} attach="geometry" />
         <meshStandardMaterial {...texturaRoca} color={encima ? PALETA.realce : PALETA.piedra} flatShading roughness={1} />
       </mesh>
-      <Piedras piedras={base} color={PALETA.piedra} />
     </group>
   )
 }
 
+// Piedras pequeñas al pie de cada menhir. Las de los cinco van en un solo grupo de instancias (HU-11)
+function basesDeMenhires() {
+  return LUGARES.flatMap((lugar, i) => {
+    const semilla = 3 + i * 11
+    const azar = generador(semilla)
+    const [x, , z] = lugar.menhir
+    const y = alturaDelTerreno(x, z)
+    return Array.from({ length: 3 }, (_, k) => {
+      const a = (k / 3) * Math.PI * 2 + azar() * 1.5
+      return { ...roca([x + Math.cos(a) * 0.6, y + 0.05, z + Math.sin(a) * 0.6], 0.22 + azar() * 0.12, 0.6, semilla + k), pieza: PIEZA_BASE[k] }
+    })
+  })
+}
+const PIEZA_BASE = ['roca-2', 'roca-6', 'roca-11']
+
 export function Menhires() {
+  const bases = useMemo(() => basesDeMenhires(), [])
   return (
     <group name="menhires">
       {LUGARES.map((lugar, i) => <Menhir key={lugar.id} lugar={lugar.id} posicion={lugar.menhir} semilla={3 + i * 11} pieza={PIEZA_MENHIR[i]} />)}
+      <Piedras nombre="bases-de-menhires" piedras={bases} color={PALETA.piedra} sombra={false} />
     </group>
   )
 }
@@ -136,23 +147,25 @@ export function Campamento() {
       <FuegoVivo position={MUNDO.fogata} />
       <BrasasDelModelo />
       {MOSTRAR_EXPLORADOR && <ExploradorEnElCampamento />}
-      {Array.from({ length: cantidad }, (_, i) => {
-        const angulo = Math.PI / 4 + (i / cantidad) * Math.PI * 2
-        return (
-          <group key={i} position={[xFogata + Math.cos(angulo) * radio, 0.22, zFogata + Math.sin(angulo) * radio]} rotation-y={-angulo + Math.PI / 2}>
-            <mesh castShadow rotation-z={Math.PI / 2}>
-              <cylinderGeometry args={[0.22, 0.24, 1.3, 7]} />
-              <meshStandardMaterial color={PALETA.madera} flatShading />
-            </mesh>
-          </group>
-        )
-      })}
+      {/* Los troncos alrededor del fuego, en una sola malla instanciada */}
+      <Instances limit={cantidad} castShadow name="troncos">
+        <cylinderGeometry args={[0.22, 0.24, 1.3, 7]} />
+        <meshStandardMaterial color={PALETA.madera} flatShading />
+        {Array.from({ length: cantidad }, (_, i) => {
+          const angulo = Math.PI / 4 + (i / cantidad) * Math.PI * 2
+          return (
+            <group key={i} position={[xFogata + Math.cos(angulo) * radio, 0.22, zFogata + Math.sin(angulo) * radio]} rotation-y={-angulo + Math.PI / 2}>
+              <Instance rotation-z={Math.PI / 2} />
+            </group>
+          )
+        })}
+      </Instances>
       <group position={MUNDO.mochila} name="mochila">
-        <mesh castShadow position={[0, 0.4, 0]}>
+        <mesh position={[0, 0.4, 0]}>
           <boxGeometry args={[0.6, 0.8, 0.4]} />
           <meshStandardMaterial color={PALETA.madera} flatShading />
         </mesh>
-        <mesh castShadow position={[0, 0.84, 0]} rotation-x={-0.25}>
+        <mesh position={[0, 0.84, 0]} rotation-x={-0.25}>
           <boxGeometry args={[0.42, 0.06, 0.3]} />
           <meshStandardMaterial color={PALETA.agua} flatShading />
         </mesh>
@@ -199,7 +212,7 @@ export function Vado() {
     escala: [0.5 + 0.05 * (i % 2), 0.24, 0.46],
     rotacion: [0, i * 1.9, 0],
   })), [desde, hasta, y, z, piedras])
-  return <Piedras nombre="vado" piedras={losas} color={PALETA.piedra} losas />
+  return <Piedras nombre="vado" piedras={losas} color={PALETA.piedra} losas sombra={false} />
 }
 
 // Pseudoaleatorio con semilla: las piedras quedan igual en cada visita
@@ -237,7 +250,7 @@ function piedrasDelSendero() {
 
 export function Sendero() {
   const piedras = useMemo(() => piedrasDelSendero(), [])
-  return <Piedras nombre="sendero" piedras={piedras} color={PALETA.piedra} losas />
+  return <Piedras nombre="sendero" piedras={piedras} color={PALETA.piedra} losas sombra={false} />
 }
 
 // Cima: el mirador es un afloramiento de losas (antes, un cilindro) y el manantial, una roca
@@ -256,7 +269,7 @@ export function Cima() {
   }
   return (
     <group name="cima">
-      <Piedras nombre="mirador" piedras={losas} color={PALETA.piedra} />
+      <Piedras nombre="mirador" piedras={losas} color={PALETA.piedra} sombra={false} />
       <Piedras nombre="manantial" piedras={[detras(1.9, 0, 0.9, 0.8), detras(1.6, 1.1, 0.55, 0.7), detras(1.6, -1.1, 0.5, 0.7)]} />
     </group>
   )

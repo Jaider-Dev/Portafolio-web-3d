@@ -46,19 +46,22 @@ function enElClaro(x, z) {
   return Math.hypot(x - XF - t * dx, z - ZF - t * dz) < 6
 }
 
-// Pedregales: una roca grande y dos o tres pequeñas apoyadas a su alrededor
+// Pedregales: una roca grande y dos o tres pequeñas apoyadas a su alrededor. Pocas piezas distintas:
+// cada una es una llamada de dibujo (HU-11)
+const PIEZAS_GRANDES = ['pena-1', 'pena-4']
+const PIEZAS_PEQUENAS = ['roca-3']
 function crearPedregales() {
   return sembrar(14, 404, { camino: 2.2, puntos: 3.5, agua: 1.2, inclinacion: 0.7 }).filter(([x, z]) => !enElClaro(x, z)).slice(0, 8).flatMap(([x, z, azar]) => {
     const grande = 0.5 + azar() * 0.5
     const y = alturaDelTerreno(x, z)
-    const piedras = [{ posicion: [x, y + grande * 0.4, z], escala: [grande * 1.2, grande, grande], rotacion: [0, azar() * 6, 0] }]
+    const piedras = [{ posicion: [x, y + grande * 0.4, z], escala: [grande * 1.2, grande, grande], rotacion: [0, azar() * 6, 0], pieza: elegir(PIEZAS_GRANDES, azar) }]
     const n = 2 + Math.floor(azar() * 2)
     for (let i = 0; i < n; i++) {
       const a = azar() * Math.PI * 2
       const r = 0.2 + azar() * 0.2
       const px = x + Math.cos(a) * (grande + r + 0.1)
       const pz = z + Math.sin(a) * (grande + r + 0.1)
-      piedras.push({ posicion: [px, alturaDelTerreno(px, pz) + r * 0.3, pz], escala: [r * 1.2, r * 0.8, r], rotacion: [azar(), azar() * 6, azar()] })
+      piedras.push({ posicion: [px, alturaDelTerreno(px, pz) + r * 0.3, pz], escala: [r * 1.2, r * 0.8, r], rotacion: [azar(), azar() * 6, azar()], pieza: elegir(PIEZAS_PEQUENAS, azar) })
     }
     return piedras
   })

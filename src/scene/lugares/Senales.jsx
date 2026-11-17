@@ -52,18 +52,18 @@ export function Letrero() {
         <meshStandardMaterial color={PALETA.madera} flatShading />
       </mesh>
       <Center position={[0, 1.35, 0.1]}>
-        <Text3D castShadow font={FUENTE_3D} size={tamano} height={0.08} curveSegments={3} bevelEnabled bevelSize={0.012} bevelThickness={0.012} bevelSegments={1}>
+        <Text3D font={FUENTE_3D} size={tamano} height={0.08} curveSegments={3} bevelEnabled bevelSize={0.012} bevelThickness={0.012} bevelSegments={1}>
           {PERFIL.nombre}
           <meshStandardMaterial ref={letras} color={PALETA.realce} emissive={PALETA.fuego} emissiveIntensity={BRILLO_LETRAS[0]} />
         </Text3D>
       </Center>
       {/* Farol: un soporte sobre la tabla, un brazo hacia delante y la lámpara colgando frente al nombre */}
       <group position={[0, 1.8, 0]} name="farol">
-        <mesh castShadow position={[0, 0.2, 0]}>
+        <mesh position={[0, 0.2, 0]}>
           <boxGeometry args={[0.07, 0.4, 0.07]} />
           <meshStandardMaterial color={PALETA.madera} flatShading />
         </mesh>
-        <mesh castShadow position={[0, 0.37, 0.25]}>
+        <mesh position={[0, 0.37, 0.25]}>
           <boxGeometry args={[0.06, 0.06, 0.5]} />
           <meshStandardMaterial color={PALETA.madera} flatShading />
         </mesh>
@@ -102,11 +102,11 @@ function Flecha({ etiqueta, altura, giro, alActivar }) {
         }}
         onPointerOut={() => setEncima(false)}
       >
-        <mesh castShadow position={[0.65, 0, 0]}>
+        <mesh position={[0.65, 0, 0]}>
           <boxGeometry args={[1.1, 0.26, 0.08]} />
           <meshStandardMaterial color={encima ? PALETA.realce : PALETA.madera} flatShading />
         </mesh>
-        <mesh castShadow position={[1.3, 0, 0]} rotation-z={-Math.PI / 2}>
+        <mesh position={[1.3, 0, 0]} rotation-z={-Math.PI / 2}>
           <coneGeometry args={[0.22, 0.34, 4]} />
           <meshStandardMaterial color={encima ? PALETA.realce : PALETA.madera} flatShading />
         </mesh>

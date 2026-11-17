@@ -232,6 +232,21 @@ function LucesDeAntorchas({ cantidad }) {
 // Rocas del kit de Blender alrededor de la boca (antes, dodecaedros)
 const PIEDRAS_PORTAL = ROCAS_PORTAL.map(([x, y, r]) => ({ posicion: [x, y, FACHADA.z + 0.25], escala: [r, r, r], rotacion: [x, y, x * y] }))
 
+// El interior (galería, murales, antorchas, cristales) solo se dibuja con la cámara cerca de la cueva:
+// desde fuera lo tapa la colina, pero igual costaba unas 60 llamadas de dibujo por fotograma (HU-11).
+// Las luces de las antorchas quedan fuera de este grupo: ocultar una luz cambia el número de luces y
+// obliga a recompilar todos los shaders
+const DISTANCIA_INTERIOR = 16
+
+function Interior({ children }) {
+  const grupo = useRef()
+  const centro = useMemo(() => new THREE.Vector3(...GALERIA.centro), [])
+  useFrame(({ camera }) => {
+    grupo.current.visible = camera.position.distanceTo(centro) < DISTANCIA_INTERIOR
+  })
+  return <group ref={grupo} name="cueva-interior">{children}</group>
+}
+
 export function Cueva() {
   const idioma = useIdioma((s) => s.idioma)
   const geometrias = useMemo(() => ({ fachada: uvPorCaja(crearFachada()), antesala: uvPorCaja(crearAntesala()), galeria: uvPorCaja(crearGaleria()), matcap: crearMatcap() }), [])
@@ -249,6 +264,7 @@ export function Cueva() {
       <mesh geometry={geometrias.antesala} receiveShadow name="cueva-antesala">
         <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.DoubleSide} />
       </mesh>
+      <Interior>
       <mesh geometry={geometrias.galeria} receiveShadow name="cueva-galeria">
         {/* Roca normal, no oscura: la penumbra la da la falta de luz y las antorchas iluminan la pared */}
         <meshStandardMaterial {...roca} color={PALETA.roca} flatShading roughness={1} side={THREE.BackSide} />
@@ -267,20 +283,23 @@ export function Cueva() {
         <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} />
         {ESTALACTITAS.map(({ posicion, escala }) => <Instance key={posicion.join()} position={posicion} scale={escala} rotation-x={Math.PI} />)}
       </Instances>
-      {CRISTALES.map(({ posicion, giro }) => (
-        <group key={posicion.join()} position={posicion} rotation-y={giro} name="cristales">
-          {[[0, 0.55, 0, 0.18, 1.1, 0.1], [0.25, 0.35, 0.1, 0.12, 0.7, -0.4], [-0.2, 0.3, -0.1, 0.1, 0.6, 0.45]].map(([x, y, z, ancho, alto, inclinacion]) => (
-            <mesh key={`${x},${z}`} position={[x, y, z]} rotation-z={inclinacion} scale={[ancho, alto, ancho]}>
-              <octahedronGeometry args={[1, 0]} />
-              <meshMatcapMaterial matcap={geometrias.matcap} flatShading />
-            </mesh>
-          ))}
-        </group>
-      ))}
+      {/* Todos los cristales en una sola malla instanciada (antes, una por cristal) */}
+      <Instances limit={CRISTALES.length * 3} name="cristales">
+        <octahedronGeometry args={[1, 0]} />
+        <meshMatcapMaterial matcap={geometrias.matcap} flatShading />
+        {CRISTALES.map(({ posicion, giro }) => (
+          <group key={posicion.join()} position={posicion} rotation-y={giro}>
+            {[[0, 0.55, 0, 0.18, 1.1, 0.1], [0.25, 0.35, 0.1, 0.12, 0.7, -0.4], [-0.2, 0.3, -0.1, 0.1, 0.6, 0.45]].map(([x, y, z, ancho, alto, inclinacion]) => (
+              <Instance key={`${x},${z}`} position={[x, y, z]} rotation-z={inclinacion} scale={[ancho, alto, ancho]} />
+            ))}
+          </group>
+        ))}
+      </Instances>
       {ANTORCHAS.map(({ posicion, giro, indice }) => <Antorcha key={indice} posicion={posicion} giro={giro} indice={indice} />)}
+      <Murales key={idioma} /* sus rótulos dependen del idioma */ />
+      </Interior>
       {/* key por cantidad: si cambia la calidad se rehacen las luces (y se recompilan los shaders) */}
       <LucesDeAntorchas key={luces} cantidad={luces} />
-      <Murales key={idioma} /* sus rótulos dependen del idioma */ />
       {/* Repisa de piedras que se pierde tras la cortina (02 Z4) */}
       {[0, 1, 2, 3, 4].map((i) => (
         <mesh castShadow key={i} position={[MUNDO.repisa.desde + i, MUNDO.repisa.y + 0.08, MUNDO.repisa.z]}>

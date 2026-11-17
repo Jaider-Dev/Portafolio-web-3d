@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { Instance, Instances } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { LUGARES } from '../../data/lugares.js'
@@ -26,9 +27,12 @@ function crearCharco(x, z) {
   return geometria
 }
 
-function Farol({ base, indice }) {
+// Lámpara compartida por los cinco faroles (mismo brillo; antes cada uno latía con su fase)
+const VIDRIO = new THREE.MeshStandardMaterial({ color: PALETA.fuego, emissive: PALETA.fuego, emissiveIntensity: 0.3 })
+
+// Charco de luz y halo de un farol (dependen de su sitio en el terreno)
+function Luz({ base, indice }) {
   const [x, y, z] = base
-  const vidrio = useRef()
   const resplandor = useRef()
   const suelo = useRef()
   const charco = useMemo(() => crearCharco(x, z), [x, z])
@@ -36,7 +40,6 @@ function Farol({ base, indice }) {
   useFrame(({ clock }) => {
     const t = transicionHora.t // 0 mañana, 1 noche
     const latido = 1 + 0.05 * Math.sin(clock.elapsedTime * 3.3 + indice) // la llama respira
-    vidrio.current.emissiveIntensity = THREE.MathUtils.lerp(0.3, 2.4, t) * latido
     resplandor.current.material.opacity = THREE.MathUtils.lerp(0.15, 1, t)
     suelo.current.material.opacity = THREE.MathUtils.lerp(0.05, 0.75, t) * latido
   })
@@ -46,25 +49,31 @@ function Farol({ base, indice }) {
       <mesh ref={suelo} geometry={charco}>
         <meshBasicMaterial map={texturaCharco()} transparent depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
       </mesh>
-      <group position={[x, y, z]}>
-        <mesh position={[0, 0.85, 0]} castShadow>
-          <cylinderGeometry args={[0.05, 0.07, 1.7, 5]} />
-          <meshStandardMaterial color={PALETA.madera} flatShading />
-        </mesh>
-        <mesh position={[0, 1.78, 0]}>
-          <boxGeometry args={[0.2, 0.26, 0.2]} />
-          <meshStandardMaterial ref={vidrio} color={PALETA.fuego} emissive={PALETA.fuego} emissiveIntensity={0.3} />
-        </mesh>
-        <mesh position={[0, 1.97, 0]}>
-          <coneGeometry args={[0.17, 0.13, 4]} />
-          <meshStandardMaterial color={PALETA.sombra} flatShading />
-        </mesh>
-        <sprite ref={resplandor} position={[0, 1.78, 0]} scale={1.4}>
-          <spriteMaterial map={texturaHalo()} blending={THREE.AdditiveBlending} transparent depthWrite={false} toneMapped={false} />
-        </sprite>
-      </group>
+      <sprite ref={resplandor} position={[x, y + 1.78, z]} scale={1.4}>
+        <spriteMaterial map={texturaHalo()} blending={THREE.AdditiveBlending} transparent depthWrite={false} toneMapped={false} />
+      </sprite>
     </group>
   )
+}
+
+// Poste, lámpara y techo de los cinco faroles: tres mallas instanciadas en vez de quince (HU-11)
+function Cuerpos({ bases }) {
+  useFrame(({ clock }) => {
+    const latido = 1 + 0.05 * Math.sin(clock.elapsedTime * 3.3)
+    VIDRIO.emissiveIntensity = THREE.MathUtils.lerp(0.3, 2.4, transicionHora.t) * latido
+  })
+  const piezas = [
+    { nombre: 'postes', alto: 0.85, geometria: <cylinderGeometry args={[0.05, 0.07, 1.7, 5]} />, material: <meshStandardMaterial color={PALETA.madera} flatShading />, sombra: true },
+    { nombre: 'lamparas', alto: 1.78, geometria: <boxGeometry args={[0.2, 0.26, 0.2]} />, material: <primitive object={VIDRIO} attach="material" /> },
+    { nombre: 'techos', alto: 1.97, geometria: <coneGeometry args={[0.17, 0.13, 4]} />, material: <meshStandardMaterial color={PALETA.sombra} flatShading /> },
+  ]
+  return piezas.map(({ nombre, alto, geometria, material, sombra }) => (
+    <Instances key={nombre} name={nombre} limit={bases.length} castShadow={sombra}>
+      {geometria}
+      {material}
+      {bases.map(({ id, base: [x, y, z] }) => <Instance key={id} position={[x, y + alto, z]} />)}
+    </Instances>
+  ))
 }
 
 // Resplandor tras la cortina de la cascada: late despacio, de día apenas, de noche llama la atención
@@ -91,7 +100,8 @@ export function Faroles() {
   }), [])
   return (
     <group name="faroles">
-      {bases.map(({ id, base }, i) => <Farol key={id} base={base} indice={i} />)}
+      <Cuerpos bases={bases} />
+      {bases.map(({ id, base }, i) => <Luz key={id} base={base} indice={i} />)}
       <ResplandorDeLaCueva />
     </group>
   )

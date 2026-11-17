@@ -1,5 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { Instance, Instances } from '@react-three/drei'
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { useExperiencia } from '../../store/useExperiencia'
 import { PALETA } from '../paleta'
@@ -65,8 +67,32 @@ const ISLAS = [
   { posicion: [-60, -14, 140], escala: 4.5 },
 ]
 
+// Cada isla lejana es una sola malla: roca, prado y árboles unidos con su color en cada vértice
+// (antes, de 3 a 5 mallas por isla: una llamada de dibujo cada una, HU-11)
+const MATERIAL_ISLA = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 })
+
+function pieza(geometria, color, transformar) {
+  const g = geometria.toNonIndexed()
+  transformar(g)
+  const c = new THREE.Color(color)
+  g.setAttribute('color', new THREE.Float32BufferAttribute(Array.from({ length: g.attributes.position.count }, () => [c.r, c.g, c.b]).flat(), 3))
+  g.deleteAttribute('uv')
+  g.deleteAttribute('normal')
+  return g
+}
+
+function crearIslaLejana(fase) {
+  const arboles = [[-0.5, 0.3], [0.6, -0.2], [0.1, 0.7]].slice(0, 1 + (fase % 3))
+  return mergeGeometries([
+    pieza(new THREE.ConeGeometry(1.6, 3, 7), PALETA.roca, (g) => g.rotateX(Math.PI).translate(0, -1.4, 0)),
+    pieza(new THREE.CylinderGeometry(1.65, 1.6, 0.25, 7), PALETA.meseta, (g) => g.translate(0, 0.05, 0)),
+    ...arboles.map(([x, z]) => pieza(new THREE.ConeGeometry(0.3, 1.3, 6), PALETA.vegetacion, (g) => g.translate(x, 0.75, z))),
+  ])
+}
+
 function IslaLejana({ posicion, escala, fase }) {
   const isla = useRef()
+  const geometria = useMemo(() => crearIslaLejana(fase), [fase])
   // Suben y bajan con suavidad, cada una a su ritmo (no sincronizadas)
   useFrame(({ clock }) => {
     if (useExperiencia.getState().ajustes.reducirMovimiento) return
@@ -74,20 +100,7 @@ function IslaLejana({ posicion, escala, fase }) {
   })
   return (
     <group ref={isla} position={posicion} scale={escala} name="isla-lejana">
-      <mesh rotation-x={Math.PI} position-y={-1.4}>
-        <coneGeometry args={[1.6, 3, 7]} />
-        <meshStandardMaterial color={PALETA.roca} flatShading roughness={1} />
-      </mesh>
-      <mesh position-y={0.05}>
-        <cylinderGeometry args={[1.65, 1.6, 0.25, 7]} />
-        <meshStandardMaterial color={PALETA.meseta} flatShading roughness={1} />
-      </mesh>
-      {[[-0.5, 0.3], [0.6, -0.2], [0.1, 0.7]].slice(0, 1 + (fase % 3)).map(([x, z]) => (
-        <mesh key={`${x},${z}`} position={[x, 0.75, z]}>
-          <coneGeometry args={[0.3, 1.3, 6]} />
-          <meshStandardMaterial color={PALETA.vegetacion} flatShading roughness={1} />
-        </mesh>
-      ))}
+      <mesh geometry={geometria} material={MATERIAL_ISLA} />
     </group>
   )
 }
