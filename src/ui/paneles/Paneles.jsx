@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ENLACES } from '../../data/enlaces'
-import { PERFIL } from '../../data/perfil'
+import { HABILIDADES } from '../../data/habilidades'
+import { PERFIL, VISION } from '../../data/perfil'
 import { PROYECTOS } from '../../data/proyectos'
 import { TEXTOS } from '../../data/textos'
+import { TRAYECTORIA } from '../../data/trayectoria'
 import { useExperiencia } from '../../store/useExperiencia'
 import { OPCIONES } from '../../utils/calidad.js'
 import { esMarcador } from '../../utils/marcadores'
@@ -36,6 +38,7 @@ function SobreMi() {
 
 // Enlace externo con su icono de salida. Mientras sea un marcador (PL-02) no lleva a ningún sitio
 export function EnlaceExterno({ etiqueta, url, descargar = false }) {
+  if (!url) return null // sin repositorio o demo públicos
   if (esMarcador(url)) {
     return <span className="boton boton-pendiente" aria-disabled="true">{etiqueta} ({T.pendiente})</span>
   }
@@ -141,7 +144,70 @@ function Proyecto() {
   )
 }
 
-const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes, proyecto: Proyecto }
+// Secciones de los lugares (17-nov): el vado, el sendero y la cima. Mismo contenido que la versión clásica
+const S = TEXTOS.clasico.secciones
+const C2 = TEXTOS.clasico
+
+function EnClasico({ seccion }) {
+  return <Link className="boton" to={`${RUTA_CLASICA}#${seccion}`}>{TEXTOS.murales.verClasico}</Link>
+}
+
+function Habilidades() {
+  return (
+    <Panel lugar={S.habilidades.lugar} seccion={S.habilidades.titulo} acciones={<EnClasico seccion="habilidades" />}>
+      {HABILIDADES.map((h) => (
+        <section key={h.id} className="panel-grupo">
+          <h3>{h.categoria}</h3>
+          <dl>
+            {Object.entries(C2.niveles).map(([nivel, etiqueta]) => h[nivel].length > 0 && (
+              <div key={nivel}>
+                <dt>{etiqueta}</dt>
+                <dd>{h[nivel].join(' · ')}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
+    </Panel>
+  )
+}
+
+function Trayectoria() {
+  // El sendero se sube: el hito más reciente arriba
+  return (
+    <Panel lugar={S.trayectoria.lugar} seccion={S.trayectoria.titulo} acciones={<EnClasico seccion="trayectoria" />}>
+      <ol className="panel-hitos" reversed>
+        {[...TRAYECTORIA].reverse().map((hito) => (
+          <li key={hito.id}>
+            <strong>{hito.anio} · {hito.titulo}</strong>
+            <span className="opcion-detalle">{hito.lugar}</span>
+            <p>{hito.logro}</p>
+          </li>
+        ))}
+      </ol>
+    </Panel>
+  )
+}
+
+function Vision() {
+  const abrirPanel = useExperiencia((s) => s.abrirPanel)
+  return (
+    <Panel
+      lugar={S.vision.lugar}
+      seccion={S.vision.titulo}
+      acciones={<button type="button" className="boton boton-principal" onClick={() => abrirPanel({ tipo: 'contacto' })}>{TEXTOS.sobreMi.contactar}</button>}
+    >
+      <dl>
+        <div><dt>{C2.vision.busco}</dt><dd>{VISION.busco}</dd></div>
+        <div><dt>{C2.vision.intereses}</dt><dd>{VISION.intereses}</dd></div>
+        <div><dt>{C2.vision.disponibilidad}</dt><dd>{VISION.disponibilidad}</dd></div>
+        <div><dt>{C2.vision.proximo}</dt><dd>{VISION.proyectoActual}</dd></div>
+      </dl>
+    </Panel>
+  )
+}
+
+const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes, proyecto: Proyecto, habilidades: Habilidades, trayectoria: Trayectoria, vision: Vision }
 
 export function Paneles() {
   const panel = useExperiencia((s) => s.panel)

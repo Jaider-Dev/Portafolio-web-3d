@@ -4,6 +4,7 @@ import { esMarcador } from '../utils/marcadores'
 const T = TEXTOS.contacto
 
 export function EnlaceClasico({ etiqueta, url }) {
+  if (!url) return null // sin repositorio o demo públicos
   if (esMarcador(url)) {
     return <span className="boton boton-pendiente" aria-disabled="true">{etiqueta} ({T.pendiente})</span>
   }

@@ -36,13 +36,17 @@ const enMovimiento = (fase) => fase === 'vuelo' || fase === 'viajando'
 
 const guardado = leerGuardado()
 
+// Al viajar a estos lugares se abre su sección (17-nov): el vado muestra las habilidades, el sendero la
+// trayectoria y la cima la visión. El campamento tiene "Sobre mí" en el HUD y la cueva, sus murales
+export const PANEL_DE_LUGAR = { rio: 'habilidades', sendero: 'trayectoria', cima: 'vision' }
+
 export const useExperiencia = create((set, get) => ({
   fase: 'cargando', // 'cargando' | 'intro' | 'vuelo' | 'explorando' | 'panel' | 'viajando' | 'fallback'
   faseTrasPanel: 'explorando',
   modo: guardado.modo ?? 'panoramico', // el modo explorador llega en el sprint 4
   zona: 'campamento',
   destino: null,
-  panel: null, // { tipo: 'sobre-mi' | 'contacto' }
+  panel: null, // { tipo: 'sobre-mi' | 'contacto' | 'ajustes' | 'proyecto' | 'habilidades' | 'trayectoria' | 'vision' }
   menuViaje: false,
   notificacion: null,
   descubiertos: guardado.descubiertos ?? [],
@@ -73,7 +77,10 @@ export const useExperiencia = create((set, get) => ({
   },
   viajar: (destino) => {
     if (!LUGARES_POR_ID[destino]) return
-    if (puedePasar(get().fase, 'viajando')) set({ destino, panel: null, menuViaje: false, fase: 'viajando' })
+    if (!puedePasar(get().fase, 'viajando')) return
+    const seccion = PANEL_DE_LUGAR[destino]
+    // El panel de la sección viaja abierto: al llegar ya está a la vista (como uno abierto durante el viaje)
+    set({ destino, panel: seccion ? { tipo: seccion } : null, menuViaje: false, fase: 'viajando' })
   },
   llegar: () => {
     const { destino, panel, fase } = get()

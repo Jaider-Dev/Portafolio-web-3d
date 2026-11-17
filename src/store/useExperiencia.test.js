@@ -69,13 +69,25 @@ test('panel durante la exploración: al cerrar vuelve a explorando', () => {
 
 test('viajar: explorando → viajando → explorando, marca descubierto y notifica', () => {
   en('explorando', { descubiertos: [] })
-  estado().viajar('sendero')
+  estado().viajar('campamento')
   assert.equal(estado().fase, 'viajando')
   estado().llegar()
   assert.equal(estado().fase, 'explorando')
-  assert.equal(estado().zona, 'sendero')
-  assert.deepEqual(estado().descubiertos, ['sendero'])
-  assert.equal(estado().notificacion.nombre, 'Sendero de los mojones')
+  assert.equal(estado().zona, 'campamento')
+  assert.deepEqual(estado().descubiertos, ['campamento'])
+  assert.equal(estado().notificacion.nombre, 'Campamento base')
+})
+
+test('viajar al vado, al sendero o a la cima abre su sección al llegar', () => {
+  for (const [id, tipo] of [['rio', 'habilidades'], ['sendero', 'trayectoria'], ['cima', 'vision']]) {
+    en('explorando')
+    estado().viajar(id)
+    assert.deepEqual(estado().panel, { tipo })
+    estado().llegar()
+    assert.equal(estado().fase, 'panel')
+    estado().cerrarPanel()
+    assert.equal(estado().fase, 'explorando')
+  }
 })
 
 test('los 5 destinos están disponibles desde el principio', () => {
