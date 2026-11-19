@@ -137,6 +137,8 @@ export function Menhires() {
 
 
 export function Campamento() {
+  // En el modo explorador el personaje lo dibuja Caminante.jsx (el que camina): aquí no se repite
+  const modo = useExperiencia((s) => s.modo)
   const [xFogata, , zFogata] = MUNDO.fogata
   const { radio, cantidad } = MUNDO.troncos
   // La tienda mira hacia la fogata: su entrada es +Z
@@ -150,7 +152,7 @@ export function Campamento() {
       </Interactivo>
       <FuegoVivo position={MUNDO.fogata} />
       <BrasasDelModelo />
-      {MOSTRAR_EXPLORADOR && <ExploradorEnElCampamento />}
+      {MOSTRAR_EXPLORADOR && modo === 'panoramico' && <ExploradorEnElCampamento />}
       {/* Los troncos alrededor del fuego, en una sola malla instanciada */}
       <Instances limit={cantidad} castShadow name="troncos">
         <cylinderGeometry args={[0.22, 0.24, 1.3, 7]} />

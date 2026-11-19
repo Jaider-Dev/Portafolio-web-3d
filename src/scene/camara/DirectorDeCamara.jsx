@@ -6,6 +6,7 @@ import { LUGARES_POR_ID } from '../../data/lugares.js'
 import { PROYECTOS } from '../../data/proyectos'
 import { useExperiencia } from '../../store/useExperiencia'
 import { centroDelMural, puntoEnLaPared } from '../lugares/galeria'
+import { ALTURA_DE_LOS_OJOS, EXPLORADOR, FRENTE_DE_LA_CUEVA, llegadaDe } from '../personaje/movimiento'
 
 // Límites del modo panorámico (06 §12)
 const MIN_DISTANCIA = 3
@@ -27,6 +28,8 @@ const CENTRO_ISLA = new THREE.Vector3(0, 2, -5.5)
 const VISTA_MIRADOR = [CENTRO_ISLA.x + 26, CENTRO_ISLA.y + 32, CENTRO_ISLA.z + 34]
 const ORBITA = { radio: 118, altura: 52, velocidad: 0.07, mirandoA: [0, -16, -5.5] } // la isla queda sobre la tarjeta de título
 const MEDIO_ANCHO_ISLA = 32
+// Modo explorador: cámara en tercera persona que sigue al personaje (se puede girar y acercar)
+const SEGUIR = { minDistancia: 2.5, maxDistancia: 16, distancia: 7.5, altura: 3.2 }
 
 const suave = (t) => t * t * (3 - 2 * t)
 
@@ -49,6 +52,16 @@ const encuadreDe = (lugar, aspecto) => {
   return {
     objetivo,
     posicion: posicion.map((valor, eje) => objetivo[eje] + (valor - objetivo[eje]) * k),
+  }
+}
+
+// Detrás del explorador, en la dirección desde la que mira la cámara del lugar (o la actual)
+const detrasDelExplorador = (desdeX, desdeZ, pies = EXPLORADOR) => {
+  const largo = Math.hypot(desdeX, desdeZ) || 1
+  const objetivo = [pies.x, pies.y + ALTURA_DE_LOS_OJOS, pies.z]
+  return {
+    objetivo,
+    posicion: [objetivo[0] + (desdeX / largo) * SEGUIR.distancia, objetivo[1] + SEGUIR.altura, objetivo[2] + (desdeZ / largo) * SEGUIR.distancia],
   }
 }
 
@@ -76,6 +89,8 @@ export function DirectorDeCamara() {
   const zona = useExperiencia((s) => s.zona)
   const panel = useExperiencia((s) => s.panel)
   const vistaMirador = useExperiencia((s) => s.vistaMirador)
+  const modo = useExperiencia((s) => s.modo)
+  const seguia = useRef(false) // la cámara ya seguía al explorador (para encuadrarlo solo al empezar)
   const enMural = useRef(false) // la cámara se acercó a un mural: al cerrar la ficha vuelve al encuadre de la cueva
 
   // Límites y bloqueo según la fase: en cinemática no hay límites, explorando sí
@@ -94,13 +109,28 @@ export function DirectorDeCamara() {
       c.setLookAt(...posicion, ...objetivo, suave)
       c.setFocalOffset(0, 0, 0, suave)
     }
+    // Modo explorador fuera de la cueva: el objetivo es el personaje y lo mueve useFrame (sin límites de caja)
+    const siguiendo = explorando && modo === 'explorador' && zona !== 'cueva'
     c.enabled = explorando && !menuViaje
-    c.minDistance = enCueva ? 1 : explorando ? MIN_DISTANCIA : 0
-    c.maxDistance = enCueva ? DISTANCIA_CUEVA : explorando ? distanciaMaxima(aspecto) : Infinity
+    c.minDistance = enCueva ? 1 : siguiendo ? SEGUIR.minDistancia : explorando ? MIN_DISTANCIA : 0
+    c.maxDistance = enCueva ? DISTANCIA_CUEVA : siguiendo ? SEGUIR.maxDistancia : explorando ? distanciaMaxima(aspecto) : Infinity
     c.maxPolarAngle = explorando ? MAX_POLAR : Math.PI
     c.minPolarAngle = enCueva ? MIN_POLAR_CUEVA : 0
-    c.setBoundary(enCueva ? LIMITES_CUEVA : explorando ? LIMITES : null)
-  }, [fase, menuViaje, aspecto, zona])
+    c.setBoundary(enCueva ? LIMITES_CUEVA : explorando && !siguiendo ? LIMITES : null)
+    if (siguiendo && !seguia.current) {
+      // Al empezar a caminar (o al salir de la cueva) la cámara se pone detrás del personaje
+      const desde = c.getPosition(new THREE.Vector3())
+      const lejos = desde.distanceTo(new THREE.Vector3(EXPLORADOR.x, EXPLORADOR.y, EXPLORADOR.z)) > SEGUIR.maxDistancia
+      // Al salir de la cueva, detrás del personaje está la roca: la cámara mira la boca desde fuera
+      const saliendo = Math.hypot(EXPLORADOR.x - FRENTE_DE_LA_CUEVA[0], EXPLORADOR.z - FRENTE_DE_LA_CUEVA[1]) < 1
+      const atras = saliendo ? [0.35, 1] : lejos ? [-Math.sin(EXPLORADOR.giro), -Math.cos(EXPLORADOR.giro)] : [desde.x - EXPLORADOR.x, desde.z - EXPLORADOR.z]
+      const { posicion, objetivo } = detrasDelExplorador(...atras)
+      c.setFocalOffset(0, 0, 0, false)
+      c.setLookAt(...posicion, ...objetivo, !useExperiencia.getState().ajustes.reducirMovimiento)
+    }
+    // Mientras hay un panel abierto se sigue "siguiendo": al cerrarlo no se vuelve a encuadrar
+    if (fase !== 'panel') seguia.current = siguiendo
+  }, [fase, menuViaje, aspecto, zona, modo])
 
   // Ficha de un proyecto abierta en la cueva (HU-22): la cámara se coloca de frente a su mural, desde
   // el centro de la galería. Con "Anterior" o "Siguiente" se desplaza al mural del otro proyecto
@@ -142,8 +172,15 @@ export function DirectorDeCamara() {
     const c = controles.current
     if (!c || !destino || (fase !== 'vuelo' && fase !== 'viajando')) return undefined
 
-    const { posicion, objetivo } = encuadreDe(LUGARES_POR_ID[destino], camara.aspect)
-    const { llegar, ajustes } = useExperiencia.getState()
+    const { llegar, ajustes, modo: modoActual } = useExperiencia.getState()
+    const lugar = LUGARES_POR_ID[destino]
+    // En el modo explorador el vuelo termina detrás del personaje, que aparece en la llegada del lugar
+    // (menos en la cueva: la cámara entra a la galería como siempre)
+    const conPersonaje = modoActual === 'explorador' && destino !== 'cueva'
+    const { posicion, objetivo } = conPersonaje
+      ? detrasDelExplorador(lugar.camara.posicion[0] - lugar.camara.objetivo[0], lugar.camara.posicion[2] - lugar.camara.objetivo[2], llegadaDe(destino))
+      : encuadreDe(lugar, camara.aspect)
+    seguia.current = conPersonaje
     c.setFocalOffset(0, 0, 0, false) // por si venía de un mural
     enMural.current = false
     if (ajustes.reducirMovimiento) {
@@ -211,6 +248,13 @@ export function DirectorDeCamara() {
         vuelo.current = null
         llegar()
       }
+      return
+    }
+
+    // Modo explorador: el centro de giro va con el personaje (la cámara conserva su ángulo y distancia)
+    const { modo: modoActual, zona: zonaActual } = useExperiencia.getState()
+    if (modoActual === 'explorador' && zonaActual !== 'cueva') {
+      if (faseActual === 'explorando') c.moveTo(EXPLORADOR.x, EXPLORADOR.y + ALTURA_DE_LOS_OJOS, EXPLORADOR.z, !ajustes.reducirMovimiento)
       return
     }
 

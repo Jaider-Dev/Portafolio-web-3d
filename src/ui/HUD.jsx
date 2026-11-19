@@ -6,6 +6,8 @@ import { useExperiencia } from '../store/useExperiencia'
 import { rutaClasicaDe } from '../utils/rutas'
 import { BotonHora } from './BotonHora'
 import { BotonSonido } from './BotonSonido'
+import { Joystick } from './Joystick'
+import { activarInteractivo, etiquetaDe } from '../scene/interaccion/registro'
 
 const FASES_CON_HUD = ['vuelo', 'explorando', 'panel', 'viajando']
 
@@ -16,16 +18,21 @@ export function HUD() {
   const panel = useExperiencia((s) => s.panel)
   const abrirPanel = useExperiencia((s) => s.abrirPanel)
   const alternarMenu = useExperiencia((s) => s.alternarMenu)
+  const alternarModo = useExperiencia((s) => s.alternarModo)
+  const modo = useExperiencia((s) => s.modo)
+  const cercano = useExperiencia((s) => s.cercano)
   const { pathname } = useLocation()
 
   useEffect(() => {
     const alPulsar = (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return
+      if (e.target instanceof HTMLElement && e.target.closest('input, textarea, select')) return
       if (e.key.toLowerCase() === 'm') alternarMenu()
+      if (e.key.toLowerCase() === 'c') alternarModo()
     }
     window.addEventListener('keydown', alPulsar)
     return () => window.removeEventListener('keydown', alPulsar)
-  }, [alternarMenu])
+  }, [alternarMenu, alternarModo])
 
   // Con el diario abierto sobre la intro no hay HUD: la intro aún no terminó
   const visible = FASES_CON_HUD.includes(fase) && !(fase === 'panel' && faseTrasPanel === 'intro')
@@ -59,12 +66,24 @@ export function HUD() {
           </Link>
         </div>
       </div>
+      {modo === 'explorador' && fase === 'explorando' && <Joystick />}
+      {cercano && fase === 'explorando' && (
+        // Lo que se puede usar con E; en pantallas táctiles, el mismo botón lo activa
+        <button type="button" className="boton hud-usar" onClick={() => activarInteractivo(cercano)}>
+          <span className="solo-teclado">{TEXTOS.explorador.usar(etiquetaDe(cercano))}</span>
+          <span className="solo-tactil">{TEXTOS.explorador.usarTactil(etiquetaDe(cercano))}</span>
+        </button>
+      )}
       <div className="hud-abajo">
         <button type="button" className="boton" onClick={() => alternarMenu(true)}>
           <span className="solo-ancho">{TEXTOS.hud.viajar}</span>
           <span className="solo-estrecho">{TEXTOS.hud.viajarCorto}</span>
         </button>
         <button type="button" className="boton" onClick={() => abrirPanel({ tipo: 'contacto' })}>{TEXTOS.hud.contacto}</button>
+        <button type="button" className="boton hud-caminar" aria-pressed={modo === 'explorador'} aria-label={TEXTOS.explorador.accesible} onClick={alternarModo}>
+          <span className="solo-ancho">{TEXTOS.explorador.caminar}</span>
+          <span className="solo-estrecho">{TEXTOS.explorador.caminarCorto}</span>
+        </button>
       </div>
     </nav>
   )

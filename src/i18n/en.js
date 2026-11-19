@@ -114,6 +114,16 @@ export const EN = {
       habilidades: 'Skills complete: you activated all five runes',
       mirarAtras: 'Look back: the smoke from the camp is still there.',
       mirador: 'The whole island from the lookout. Drag to move the camera again.',
+      explorador: 'Walk with WASD or the arrow keys, run with Shift and use what is nearby with E. Drag to turn the camera.',
+      exploradorTactil: 'Walk with the joystick (push it to the edge to run). Drag to turn the camera.',
+    },
+    explorador: {
+      caminar: 'Walk (C)',
+      caminarCorto: 'Walk',
+      accesible: 'Walk with the explorer',
+      usar: (etiqueta) => `E · ${etiqueta}`,
+      usarTactil: (etiqueta) => `Use: ${etiqueta}`,
+      joystick: 'Joystick to walk',
     },
     interaccion: {
       fogata: 'Campfire · About me',

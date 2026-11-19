@@ -26,3 +26,15 @@ test('registro: elige el interactivo más centrado y cercano, ignora los lejanos
   quitar.forEach((q) => q())
   assert.deepEqual(interactivos(), [])
 })
+
+test('registro: el más cercano a los pies del explorador, con su etiqueta (tecla E)', async () => {
+  const { masCercano, etiquetaDe } = await import('./registro.js')
+  const quitar = [
+    registrar('fogata', objeto(0, 0, 0), () => 'a', 'Fogata · Sobre mí'),
+    registrar('mochila', objeto(2, 0, 0), () => 'b', 'Mochila'),
+  ]
+  assert.equal(masCercano(1.5, 0, 0), 'mochila')
+  assert.equal(masCercano(10, 0, 0), null)
+  assert.equal(etiquetaDe('fogata'), 'Fogata · Sobre mí')
+  quitar.forEach((q) => q())
+})

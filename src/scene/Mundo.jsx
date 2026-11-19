@@ -12,6 +12,7 @@ import { Mojones } from './lugares/Mojones'
 import { Runas } from './lugares/Runas'
 import { Letrero, Poste } from './lugares/Senales'
 import { Bosque } from './naturaleza/Bosque'
+import { Caminante } from './personaje/Caminante'
 import { Detalles } from './naturaleza/Detalles'
 import { Sonido } from './sonido/Sonido'
 
@@ -28,6 +29,7 @@ export function Mundo() {
       <Bosque />
       <Detalles />
       <Campamento />
+      <Caminante />
       <Puente />
       <Runas />
       <Cueva />

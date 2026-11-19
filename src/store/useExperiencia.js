@@ -45,7 +45,10 @@ export const PANEL_DE_LUGAR = { rio: 'habilidades', sendero: 'trayectoria', cima
 export const useExperiencia = create((set, get) => ({
   fase: 'cargando', // 'cargando' | 'intro' | 'vuelo' | 'explorando' | 'panel' | 'viajando' | 'fallback'
   faseTrasPanel: 'explorando',
-  modo: guardado.modo ?? 'panoramico', // el modo explorador llega en el sprint 4
+  // 'panoramico' (cámara libre) o 'explorador' (se camina con el personaje). El explorador básico se
+  // adelantó el 19-nov: camina sin física; las colisiones y animaciones llegan en el sprint 4
+  modo: guardado.modo === 'explorador' ? 'explorador' : 'panoramico',
+  cercano: null, // modo explorador: id del interactivo al alcance de la tecla E
   zona: 'campamento',
   destino: null,
   panel: null, // { tipo: 'sobre-mi' | 'contacto' | 'ajustes' | 'proyecto' | 'habilidades' | 'trayectoria' | 'vision' }
@@ -121,6 +124,16 @@ export const useExperiencia = create((set, get) => ({
     get().guardar()
   },
   setVistaMirador: (vistaMirador) => set({ vistaMirador }),
+  alternarModo: () => {
+    const { fase, modo } = get()
+    if (fase !== 'explorando' && fase !== 'panel') return
+    const nuevo = modo === 'explorador' ? 'panoramico' : 'explorador'
+    set({ modo: nuevo, cercano: null, vistaMirador: false, notificacion: nuevo === 'explorador' ? { tipo: 'explorador' } : null })
+    get().guardar()
+  },
+  setCercano: (cercano) => {
+    if (get().cercano !== cercano) set({ cercano })
+  },
   alternarMenu: (abierto = !get().menuViaje) => {
     const { fase } = get()
     if (fase === 'explorando' || fase === 'panel' || fase === 'viajando') set({ menuViaje: abierto })

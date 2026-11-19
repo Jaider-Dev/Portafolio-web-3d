@@ -205,3 +205,15 @@ test('marca de visitado y "Habilidades completas" al activar las cinco runas (HT
   estado().marcarVisitado('runa-backend') // repetir no duplica
   assert.equal(estado().visitados.length, 5)
 })
+
+test('modo explorador: se alterna explorando, se guarda y avisa de los controles', () => {
+  estado().alternarModo()
+  assert.equal(estado().modo, 'panoramico', 'en la carga no cambia')
+  en('explorando')
+  estado().alternarModo()
+  assert.equal(estado().modo, 'explorador')
+  assert.deepEqual(estado().notificacion, { tipo: 'explorador' })
+  assert.equal(JSON.parse(memoria.get('isla')).modo, 'explorador')
+  estado().alternarModo()
+  assert.equal(estado().modo, 'panoramico')
+})

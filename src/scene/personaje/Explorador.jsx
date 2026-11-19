@@ -9,7 +9,7 @@ import { CANDIDATO_ACTIVO, CANDIDATOS } from './candidatos'
 // El explorador (personaje de HU-27/HU-31). Modelo preparado en Blender con blender/preparar_personaje.py:
 // malla de quads, color y relieve horneados en dos texturas de 1K, esqueleto y tres clips en bucle:
 // "reposo", "caminar" y "correr" (sesión 5: useAnimations). Mira hacia +Z.
-// En el modo panorámico espera en el campamento; el modo explorador (sprint 4) lo moverá con física.
+// En el modo panorámico espera en el campamento; en el modo explorador lo mueve Caminante.jsx.
 function materialMaqueta(original) {
   return new THREE.MeshStandardMaterial({
     color: PALETA.humo, // gris cálido de la paleta: no se añade ningún color nuevo
@@ -40,7 +40,8 @@ export function Explorador({ ruta = CANDIDATOS[CANDIDATO_ACTIVO].ruta, sinColor 
   const reducir = useExperiencia((s) => s.ajustes.reducirMovimiento)
 
   useEffect(() => {
-    const accion = actions[animacion]
+    // Si el modelo no trae el clip pedido (el candidato 3 solo tiene "reposo"), sigue en reposo
+    const accion = actions[animacion] ?? actions.reposo
     if (!accion) return undefined
     // Con "reducir movimiento" se queda quieto en la primera pose del clip (velocidad 0)
     accion.reset().setEffectiveTimeScale(reducir ? 0 : 1).fadeIn(0.3).play()

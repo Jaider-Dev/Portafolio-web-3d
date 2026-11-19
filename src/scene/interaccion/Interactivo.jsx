@@ -41,7 +41,7 @@ export function Interactivo({ id, etiqueta, pista, alActivar, children, altura =
   // El registro guarda una función estable que llama a la acción vigente (alActivar puede cambiar)
   const activarRef = useRef(activar)
   useEffect(() => { activarRef.current = activar })
-  useEffect(() => registrar(id, grupo.current, () => activarRef.current()), [id])
+  useEffect(() => registrar(id, grupo.current, () => activarRef.current(), etiqueta), [id, etiqueta])
 
   useFrame((_, delta) => {
     const objetivo = encima && activo ? realce : 1

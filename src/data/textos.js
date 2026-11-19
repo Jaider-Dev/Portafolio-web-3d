@@ -33,6 +33,15 @@ export const TEXTOS = {
     abrirSobreMi: (nombre, rol) => `${nombre}, ${rol}. Abrir Sobre mí`,
     region: 'Accesos de la isla',
   },
+  // Modo explorador básico (19-nov): caminar con el personaje
+  explorador: {
+    caminar: 'Caminar (C)',
+    caminarCorto: 'Caminar',
+    accesible: 'Caminar con el explorador',
+    usar: (etiqueta) => `E · ${etiqueta}`,
+    usarTactil: (etiqueta) => `Usar: ${etiqueta}`,
+    joystick: 'Joystick para caminar',
+  },
   murales: {
     destacado: 'Proyecto destacado',
     proxima: 'Próxima expedición',
@@ -169,6 +178,8 @@ export const TEXTOS = {
     habilidades: 'Habilidades completas: activaste las cinco runas',
     mirarAtras: 'Mira atrás: el humo del campamento sigue ahí.',
     mirador: 'Toda la isla desde el mirador. Arrastra para volver a mover la cámara.',
+    explorador: 'Camina con WASD o las flechas, corre con Shift y usa lo cercano con E. Arrastra para girar la cámara.',
+    exploradorTactil: 'Camina con el joystick (hasta el borde para correr). Arrastra para girar la cámara.',
   },
   canvas: (nombre) => `Isla 3D interactiva del portafolio de ${nombre}. Usa el menú de viaje para acceder a cada sección.`,
   clasico: {

@@ -66,6 +66,45 @@ html:has(.experiencia), body:has(.experiencia) {
 .boton-idioma { font-weight: 700; letter-spacing: 0.04em; }
 .hud .boton { pointer-events: auto; }
 .hud-autor { max-width: 70vw; }
+
+/* Modo explorador (19-nov): botón de caminar, aviso de la tecla E y joystick táctil */
+.hud-caminar[aria-pressed="true"] { border-width: 2px; border-color: var(--enfasis-borde); }
+.hud-usar {
+  position: absolute;
+  left: 50%;
+  bottom: 5rem;
+  transform: translateX(-50%);
+  max-width: calc(100% - 2rem);
+  border-color: var(--enfasis-borde);
+}
+.solo-tactil { display: none; }
+.joystick {
+  position: absolute;
+  left: 1rem;
+  bottom: 5rem;
+  display: none;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--borde);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--superficie) 55%, transparent);
+  pointer-events: auto;
+  touch-action: none;
+}
+.joystick-palanca {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--enfasis);
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .joystick { display: grid; }
+  .solo-teclado { display: none; }
+  .solo-tactil { display: inline; }
+  .hud-usar { left: auto; right: 1rem; transform: none; }
+}
 .solo-estrecho { display: none; }
 
 .capa-dialogo {
@@ -207,8 +246,10 @@ html:has(.experiencia), body:has(.experiencia) {
   .hud-ajustes { position: absolute; top: 0.5rem; right: calc(0.5rem + 104px); }
   .hud-abajo { gap: 0.5rem; }
   .hud-abajo .boton { flex: 1; }
-  .hud-clasico { position: absolute; right: 0.5rem; bottom: 0.5rem; width: calc((100% - 2rem) / 3); }
-  .hud-abajo { padding-right: calc((100% - 2rem) / 3 + 0.5rem); }
+  /* Cuatro botones iguales abajo (Viajar, Contacto, Caminar y Clásico, que va aparte con posición absoluta) */
+  .hud-clasico { position: absolute; right: 0.5rem; bottom: 0.5rem; width: calc((100% - 2.5rem) / 4); }
+  .hud-abajo { padding-right: calc((100% - 2.5rem) / 4 + 0.5rem); }
+  .hud-abajo .boton, .hud-clasico { padding-inline: 0.25rem; }
   .panel { width: 100%; }
   .capa-dialogo:not(.capa-menu) { align-items: flex-end; }
   .panel { height: 100%; border: 0; }
