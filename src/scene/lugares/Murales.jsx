@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react'
-import { useCursor } from '@react-three/drei'
+import { useMemo } from 'react'
 import * as THREE from 'three'
 import { VISION } from '../../data/perfil'
 import { MURAL_PROXIMA, PROYECTOS } from '../../data/proyectos'
 import { TEXTOS } from '../../data/textos'
 import { useExperiencia } from '../../store/useExperiencia'
 import { esMarcador } from '../../utils/marcadores'
+import { Interactivo } from '../interaccion/Interactivo'
 import { PALETA } from '../paleta'
-import { crearGaleria, GALERIA } from './galeria'
+import { ALTURA_MURAL as ALTURA, centroDelMural, crearGaleria, GALERIA } from './galeria'
 
 // Murales de la cueva (02 Z5, 06 §11.3): cada proyecto está PINTADO sobre la roca, no colgado. El mural
 // es un parche de malla que copia la forma de la pared (rayos desde el interior contra la geometría de
@@ -15,7 +15,6 @@ import { crearGaleria, GALERIA } from './galeria'
 // pigmento absorbido por la piedra. Al pasar el puntero se aviva y al hacer clic abre su ficha (HU-22).
 // Cuando haya capturas de los proyectos (mural.imagen) se pintarán dentro del mismo parche
 
-const ALTURA = 1.75 // centro del mural
 const SEPARACION = 0.03 // por delante de la roca: sin parpadeo entre las dos superficies
 const TAMANO = { normal: [1.9, 1.25], destacado: [2.8, 1.75] } // ancho (a lo largo de la pared) y alto
 
@@ -158,21 +157,9 @@ function crearParche(angulo, [ancho, alto], columnas = 18, filas = 10) {
   return geometria
 }
 
-function Mural({ geometria, textura, alActivar, nombre }) {
-  const [encima, setEncima] = useState(false)
-  useCursor(encima && Boolean(alActivar))
+function Mural({ geometria, textura, encima = false, nombre }) {
   return (
-    <mesh
-      geometry={geometria}
-      name={nombre}
-      onClick={alActivar && ((e) => {
-        if (e.delta > 4) return // fue un arrastre de cámara, no un clic
-        e.stopPropagation()
-        alActivar()
-      })}
-      onPointerOver={alActivar && ((e) => { e.stopPropagation(); setEncima(true) })}
-      onPointerOut={alActivar && (() => setEncima(false))}
-    >
+    <mesh geometry={geometria} name={nombre}>
       {/* La pintura recibe la luz de las antorchas como la roca y brilla apenas por sí misma
           (emissiveMap): se adivina en la penumbra; al pasar el puntero se aviva */}
       <meshStandardMaterial
@@ -194,6 +181,9 @@ export function Murales() {
   const murales = useMemo(() => [
     ...PROYECTOS.map((proyecto, i) => ({
       id: proyecto.id,
+      angulo: proyecto.mural.angulo,
+      alto: (proyecto.destacado ? TAMANO.destacado : TAMANO.normal)[1],
+      titulo: tituloDe(proyecto, i + 1),
       geometria: crearParche(proyecto.mural.angulo, proyecto.destacado ? TAMANO.destacado : TAMANO.normal),
       textura: crearPintura({
         titulo: tituloDe(proyecto, i + 1),
@@ -217,15 +207,18 @@ export function Murales() {
 
   return (
     <group name="murales">
-      {murales.map(({ id, geometria, textura }) => (
-        <Mural
-          key={id}
-          nombre={`mural-${id}`}
-          geometria={geometria}
-          textura={textura}
-          alActivar={id === 'proxima' ? null : () => abrirPanel({ tipo: 'proyecto', id })}
-        />
-      ))}
+      {murales.map(({ id, geometria, textura, angulo, alto, titulo }) => {
+        const mural = <Mural nombre={`mural-${id}`} geometria={geometria} textura={textura} />
+        if (id === 'proxima') return <group key={id}>{mural}</group> // sin terminar: no se abre
+        // Interactivo (HT-11) sin escala: la etiqueta y la marca de visitado van sobre el mural
+        const [x, , z] = centroDelMural(angulo)
+        return (
+          <Interactivo key={id} id={`mural-${id}`} etiqueta={titulo} pista={TEXTOS.interaccion.mural} realce={1}
+            etiquetaEn={[x, ALTURA + alto / 2 + 0.25, z]} alActivar={() => abrirPanel({ tipo: 'proyecto', id })}>
+            {({ encima }) => <Mural nombre={`mural-${id}`} geometria={geometria} textura={textura} encima={encima} />}
+          </Interactivo>
+        )
+      })}
     </group>
   )
 }

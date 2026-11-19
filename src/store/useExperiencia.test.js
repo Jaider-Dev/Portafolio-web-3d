@@ -175,3 +175,33 @@ test('calidad elegida a mano: el monitor no la cambia y la elección se guarda',
   assert.equal(estado().calidadAuto, 'alta')
   assert.equal(JSON.parse(memoria.get('isla')).ajustes.calidad, 'media')
 })
+
+test('viajar con un panel: "Ver proyectos" llega a la cueva con la ficha abierta (HU-22, HU-26)', () => {
+  en('intro')
+  estado().viajar('cueva', { tipo: 'proyecto', id: 'sescol' })
+  assert.equal(estado().fase, 'viajando')
+  estado().llegar()
+  assert.equal(estado().fase, 'panel')
+  assert.equal(estado().zona, 'cueva')
+  assert.deepEqual(estado().panel, { tipo: 'proyecto', id: 'sescol' })
+})
+
+test('abrirEn: en el mismo lugar abre el panel; desde otro, viaja con él', () => {
+  en('explorando', { zona: 'campamento' })
+  estado().abrirEn('campamento', { tipo: 'contacto' })
+  assert.equal(estado().fase, 'panel')
+  en('explorando', { zona: 'rio' })
+  estado().abrirEn('cima', { tipo: 'vision' })
+  assert.equal(estado().fase, 'viajando')
+  assert.equal(estado().destino, 'cima')
+})
+
+test('marca de visitado y "Habilidades completas" al activar las cinco runas (HT-11, HU-20)', () => {
+  useExperiencia.setState({ visitados: [], notificacion: null })
+  for (const id of ['frontend', '3d', 'lenguajes', 'herramientas']) estado().marcarVisitado(`runa-${id}`)
+  assert.equal(estado().notificacion, null)
+  estado().marcarVisitado('runa-backend')
+  assert.deepEqual(estado().notificacion, { tipo: 'habilidades' })
+  estado().marcarVisitado('runa-backend') // repetir no duplica
+  assert.equal(estado().visitados.length, 5)
+})

@@ -45,7 +45,7 @@ export function CasoProyecto() {
       <nav className="acciones clasico-paginacion" aria-label={TEXTOS.clasico.secciones.proyectos.titulo}>
         {anterior && <Link to={`${RUTA_CLASICA}/proyecto/${anterior.id}`}>{T.anterior}</Link>}
         {siguiente && <Link to={`${RUTA_CLASICA}/proyecto/${siguiente.id}`}>{T.siguiente}</Link>}
-        {hayWebGL() && <Link to="/lugar/cueva">{T.mural}</Link>}
+        {hayWebGL() && <Link to={`/proyecto/${proyecto.id}`}>{T.mural}</Link>}
       </nav>
     </article>
   )

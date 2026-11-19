@@ -6,6 +6,9 @@ const SEGUNDOS_VISIBLE = 4
 
 const textoDe = (notificacion) => {
   if (notificacion.tipo === 'descubierto') return TEXTOS.notificacion.descubriste(notificacion.nombre, notificacion.seccion)
+  if (notificacion.tipo === 'habilidades') return TEXTOS.notificacion.habilidades
+  if (notificacion.tipo === 'mirarAtras') return TEXTOS.notificacion.mirarAtras
+  if (notificacion.tipo === 'mirador') return TEXTOS.notificacion.mirador
   if (notificacion.tipo === 'calidad') return TEXTOS.notificacion.calidad(TEXTOS.ajustes.opciones[notificacion.nivel].titulo.toLowerCase())
   return TEXTOS.notificacion.enlacePendiente(notificacion.destino)
 }

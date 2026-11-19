@@ -6,7 +6,10 @@ import { Agua } from './agua/Agua'
 import { Isla } from './isla/Isla'
 import { Cueva } from './lugares/Cueva'
 import { Faroles } from './lugares/Faroles'
-import { Campamento, Cima, Menhires, Puente, Sendero, Vado } from './lugares/Lugares'
+import { EtiquetasDeLugares } from './lugares/EtiquetasDeLugares'
+import { Campamento, Cima, Menhires, Puente, Sendero } from './lugares/Lugares'
+import { Mojones } from './lugares/Mojones'
+import { Runas } from './lugares/Runas'
 import { Letrero, Poste } from './lugares/Senales'
 import { Bosque } from './naturaleza/Bosque'
 import { Detalles } from './naturaleza/Detalles'
@@ -26,11 +29,13 @@ export function Mundo() {
       <Detalles />
       <Campamento />
       <Puente />
-      <Vado />
+      <Runas />
       <Cueva />
       <Sendero />
+      <Mojones />
       <Cima />
       <Menhires />
+      <EtiquetasDeLugares />
       <Faroles />
       <Letrero />
       <Poste key={idioma} />

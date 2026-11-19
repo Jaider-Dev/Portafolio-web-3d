@@ -4,7 +4,7 @@ import { clone as clonarConEsqueleto } from 'three/examples/jsm/utils/SkeletonUt
 import * as THREE from 'three'
 import { useExperiencia } from '../../store/useExperiencia'
 import { PALETA } from '../paleta'
-import { CANDIDATOS, RUTA_PERSONAJE } from './candidatos'
+import { CANDIDATO_ACTIVO, CANDIDATOS } from './candidatos'
 
 // El explorador (personaje de HU-27/HU-31). Modelo preparado en Blender con blender/preparar_personaje.py:
 // malla de quads, color y relieve horneados en dos texturas de 1K, esqueleto y tres clips en bucle:
@@ -21,7 +21,7 @@ function materialMaqueta(original) {
 
 // sinColor (17-nov): se muestra como maqueta gris, sin la textura de color pintada por zonas; conserva el
 // mapa de normales para que se lean los pliegues
-export function Explorador({ ruta = RUTA_PERSONAJE, sinColor = false, animacion = 'reposo', ...props }) {
+export function Explorador({ ruta = CANDIDATOS[CANDIDATO_ACTIVO].ruta, sinColor = false, animacion = 'reposo', ...props }) {
   const { scene, animations } = useGLTF(ruta)
   // Un SkinnedMesh no se puede reutilizar con <Clone>: SkeletonUtils.clone duplica también los huesos
   const modelo = useMemo(() => {
@@ -54,4 +54,5 @@ export function Explorador({ ruta = RUTA_PERSONAJE, sinColor = false, animacion 
   )
 }
 
-for (const { ruta } of Object.values(CANDIDATOS)) useGLTF.preload(ruta)
+// Solo el candidato que sale en la isla: el otro no se descarga mientras no se elija
+useGLTF.preload(CANDIDATOS[CANDIDATO_ACTIVO].ruta)

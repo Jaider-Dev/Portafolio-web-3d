@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ENLACES } from '../../data/enlaces'
 import { HABILIDADES } from '../../data/habilidades'
 import { PERFIL, VISION } from '../../data/perfil'
-import { PROYECTOS } from '../../data/proyectos'
+import { PROYECTOS, PROYECTO_DESTACADO } from '../../data/proyectos'
 import { TEXTOS } from '../../data/textos'
 import { TRAYECTORIA } from '../../data/trayectoria'
 import { useIdioma } from '../../store/idioma'
@@ -24,7 +24,7 @@ function SobreMi() {
       seccion={TEXTOS.sobreMi.seccion}
       acciones={(
         <>
-          <button type="button" className="boton boton-principal" onClick={() => viajar('cueva')}>{TEXTOS.sobreMi.proyectos}</button>
+          <button type="button" className="boton boton-principal" onClick={() => viajar('cueva', { tipo: 'proyecto', id: PROYECTO_DESTACADO.id })}>{TEXTOS.sobreMi.proyectos}</button>
           <button type="button" className="boton" onClick={() => abrirPanel({ tipo: 'contacto' })}>{TEXTOS.sobreMi.contactar}</button>
         </>
       )}
@@ -126,19 +126,39 @@ function Ajustes() {
   )
 }
 
-// Ficha de un proyecto (HU-22): se abre desde su mural. Los mismos apartados que la versión clásica
+// Ficha de un proyecto (HU-22): se abre desde su mural, desde "Ver proyectos" o con /proyecto/<id>
+// (HU-26). Los mismos apartados que la versión clásica. "Anterior" y "Siguiente" recorren los murales en
+// el orden de visita de la galería (la cámara se desplaza al mural de cada uno: DirectorDeCamara)
+// Ángulo del mural de 0 a 2 (en fracciones de π): la visita va de la izquierda de la entrada (≈ 0,86)
+// por el fondo (1,5) hasta la derecha (≈ 1,85), igual que en la galería (02 Z5)
+const vuelta = (angulo) => ((angulo % 2) + 2) % 2
+const EN_ORDEN_DE_VISITA = () => [...PROYECTOS].sort((a, b) => vuelta(a.mural.angulo) - vuelta(b.mural.angulo))
+
 function Proyecto() {
   const panel = useExperiencia((s) => s.panel)
+  const abrirEn = useExperiencia((s) => s.abrirEn)
+  const cerrarPanel = useExperiencia((s) => s.cerrarPanel)
   const indice = PROYECTOS.findIndex((p) => p.id === panel.id)
   const proyecto = PROYECTOS[indice]
   if (!proyecto) return null
   const C = TEXTOS.clasico.caso
+  const M = TEXTOS.murales
   const titulo = esMarcador(proyecto.titulo) ? `Proyecto ${indice + 1}` : proyecto.titulo
+  const orden = EN_ORDEN_DE_VISITA()
+  const posicion = orden.findIndex((p) => p.id === proyecto.id)
+  const ir = (paso) => abrirEn('cueva', { tipo: 'proyecto', id: orden[(posicion + paso + orden.length) % orden.length].id })
   return (
     <Panel
-      lugar={TEXTOS.murales.lugar}
+      lugar={M.lugar}
       seccion={titulo}
-      acciones={<Link className="boton" to={`${RUTA_CLASICA}/proyecto/${proyecto.id}`}>{TEXTOS.murales.verClasico}</Link>}
+      acciones={(
+        <>
+          <button type="button" className="boton" onClick={() => ir(-1)}><span aria-hidden="true">← </span>{M.anterior}</button>
+          <button type="button" className="boton" onClick={() => ir(1)}>{M.siguiente}<span aria-hidden="true"> →</span></button>
+          <button type="button" className="boton" onClick={cerrarPanel}>{M.explorar}</button>
+          <Link className="boton" to={`${RUTA_CLASICA}/proyecto/${proyecto.id}`}>{M.verClasico}</Link>
+        </>
+      )}
     >
       <p>{proyecto.resumen}</p>
       <h3>{C.reto}</h3>
@@ -153,6 +173,13 @@ function Proyecto() {
         <EnlaceExterno etiqueta={C.codigo} url={proyecto.enlaces.codigo} />
         <EnlaceExterno etiqueta={C.demo} url={proyecto.enlaces.demo} />
       </div>
+      {/* El video del destacado se proyecta en su mural (HU-23); aquí, su contenido en texto */}
+      {proyecto.video?.transcripcion && (
+        <details>
+          <summary>{M.transcripcion}</summary>
+          <p>{proyecto.video.transcripcion}</p>
+        </details>
+      )}
     </Panel>
   )
 }
@@ -204,11 +231,18 @@ function Trayectoria() {
 
 function Vision() {
   const abrirPanel = useExperiencia((s) => s.abrirPanel)
+  const viajar = useExperiencia((s) => s.viajar)
   return (
     <Panel
       lugar={S.vision.lugar}
       seccion={S.vision.titulo}
-      acciones={<button type="button" className="boton boton-principal" onClick={() => abrirPanel({ tipo: 'contacto' })}>{TEXTOS.sobreMi.contactar}</button>}
+      acciones={(
+        <>
+          <button type="button" className="boton boton-principal" onClick={() => abrirPanel({ tipo: 'contacto' })}>{TEXTOS.sobreMi.contactar}</button>
+          <button type="button" className="boton" onClick={() => abrirPanel({ tipo: 'construccion' })}>{TEXTOS.vision.construccion}</button>
+          <button type="button" className="boton" onClick={() => viajar('campamento')}>{TEXTOS.vision.volver}</button>
+        </>
+      )}
     >
       <dl>
         <div><dt>{C2.vision.busco}</dt><dd>{VISION.busco}</dd></div>
@@ -220,7 +254,71 @@ function Vision() {
   )
 }
 
-const PANELES = { 'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes, proyecto: Proyecto, habilidades: Habilidades, trayectoria: Trayectoria, vision: Vision }
+// Tarjeta de una runa del vado (HU-20): sus habilidades en tres grupos, sin porcentajes
+function Runa() {
+  const panel = useExperiencia((s) => s.panel)
+  const abrirPanel = useExperiencia((s) => s.abrirPanel)
+  const activadas = useExperiencia((s) => s.visitados.filter((v) => v.startsWith('runa-')).length)
+  const habilidad = HABILIDADES.find((h) => h.id === panel.id)
+  if (!habilidad) return null
+  const R = TEXTOS.runa
+  return (
+    <Panel
+      lugar={R.lugar}
+      seccion={R.titulo(habilidad.categoria)}
+      acciones={<button type="button" className="boton" onClick={() => abrirPanel({ tipo: 'habilidades' })}>{R.todas}</button>}
+    >
+      <dl>
+        {Object.entries(C2.niveles).map(([nivel, etiqueta]) => habilidad[nivel].length > 0 && (
+          <div key={nivel}>
+            <dt>{etiqueta}</dt>
+            <dd>{habilidad[nivel].join(' · ')}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="panel-estado">{R.activadas(activadas, HABILIDADES.length)}</p>
+    </Panel>
+  )
+}
+
+// Tarjeta de un mojón del sendero (HU-24): año, título, lugar y una línea de logro
+function Hito() {
+  const panel = useExperiencia((s) => s.panel)
+  const abrirPanel = useExperiencia((s) => s.abrirPanel)
+  const hito = TRAYECTORIA.find((h) => h.id === panel.id)
+  if (!hito) return null
+  return (
+    <Panel
+      lugar={TEXTOS.hito.lugar}
+      seccion={`${hito.anio} · ${hito.titulo}`}
+      acciones={<button type="button" className="boton" onClick={() => abrirPanel({ tipo: 'trayectoria' })}>{TEXTOS.hito.todos}</button>}
+    >
+      <p className="opcion-detalle">{hito.lugar}</p>
+      <p>{hito.logro}</p>
+    </Panel>
+  )
+}
+
+// "Cómo construí esta isla" (HU-25, 03 E14): el stack, las decisiones técnicas y los créditos (CREDITS.md)
+function Construccion() {
+  const K = TEXTOS.construccion
+  const bitacora = PROYECTOS.find((p) => p.id === 'bitacora')
+  return (
+    <Panel lugar={K.lugar} seccion={K.titulo} acciones={<EnlaceExterno etiqueta={K.codigo} url={bitacora?.enlaces.codigo} />}>
+      <h3>{K.stack}</h3>
+      <ul>{K.stackLista.map((linea) => <li key={linea}>{linea}</li>)}</ul>
+      <h3>{K.decisiones}</h3>
+      <ul>{K.decisionesLista.map((linea) => <li key={linea}>{linea}</li>)}</ul>
+      <h3>{K.creditos}</h3>
+      <ul>{K.creditosLista.map((linea) => <li key={linea}>{linea}</li>)}</ul>
+    </Panel>
+  )
+}
+
+const PANELES = {
+  'sobre-mi': SobreMi, contacto: Contacto, ajustes: Ajustes, proyecto: Proyecto, habilidades: Habilidades,
+  trayectoria: Trayectoria, vision: Vision, runa: Runa, hito: Hito, construccion: Construccion,
+}
 
 export function Paneles() {
   const panel = useExperiencia((s) => s.panel)

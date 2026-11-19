@@ -24,3 +24,18 @@ export function lugarDeRuta(pathname) {
   const [, tipo, id] = pathname.split('/')
   return tipo === 'lugar' ? id : null
 }
+
+// /proyecto/<id> (HU-26): el id del proyecto, o null si la ruta es de otra cosa
+export function proyectoDeRuta(pathname) {
+  const [, tipo, id] = pathname.split('/')
+  return tipo === 'proyecto' && id ? decodeURIComponent(id) : null
+}
+
+// La ruta que refleja lo que se ve: la ficha abierta de un proyecto o el lugar donde está la cámara
+// Un panel abierto sobre la intro (el diario) no cambia la URL: la intro aún no terminó
+export function rutaDeEstado({ fase, zona, panel, faseTrasPanel }) {
+  if (fase === 'panel' && faseTrasPanel === 'intro') return null
+  if (fase === 'panel' && panel?.tipo === 'proyecto') return `/proyecto/${panel.id}`
+  if (fase === 'explorando' || fase === 'panel') return `/lugar/${zona}`
+  return null
+}

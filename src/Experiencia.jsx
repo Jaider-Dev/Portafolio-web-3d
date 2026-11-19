@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { useProgress } from '@react-three/drei'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { LUGARES_POR_ID } from './data/lugares.js'
+import { PROYECTOS } from './data/proyectos'
 import { PERFIL } from './data/perfil'
 import { TEXTOS } from './data/textos'
 import { DirectorDeCamara } from './scene/camara/DirectorDeCamara'
@@ -17,7 +18,7 @@ import { MenuViaje } from './ui/MenuViaje'
 import { Notificaciones } from './ui/Notificaciones'
 import { PantallaDeCarga, PantallaDeError } from './ui/PantallaDeCarga'
 import { Paneles } from './ui/paneles/Paneles'
-import { lugarDeRuta } from './utils/rutas'
+import { lugarDeRuta, proyectoDeRuta, rutaDeEstado } from './utils/rutas'
 import './ui/ui.css'
 
 const Monitor = import.meta.env.DEV ? lazy(() => import('./scene/dev/Monitor')) : null
@@ -54,24 +55,30 @@ function CargaLista() {
     if (fase !== 'cargando') return
     setFase('intro')
     const lugar = lugarDeRuta(pathname)
-    if (LUGARES_POR_ID[lugar]) viajar(lugar) // enlace directo: se salta la intro (04, R-E)
-    else if (pathname !== '/') navigate('/', { replace: true })
+    const proyecto = PROYECTOS.find((p) => p.id === proyectoDeRuta(pathname))
+    // Enlace directo: se salta la intro (04, R-E). Un proyecto lleva a la cueva con su ficha abierta (HU-26)
+    if (proyecto) viajar('cueva', { tipo: 'proyecto', id: proyecto.id })
+    else if (LUGARES_POR_ID[lugar]) viajar(lugar)
+    else if (pathname !== '/') navigate('/', { replace: true }) // enlace inválido: intro normal
   }, [pathname, navigate])
 
   return null
 }
 
-// Al llegar a un lugar, la URL lo refleja sin llenar el historial (06 §6)
+// La URL refleja lo que se ve sin llenar el historial (06 §6): /lugar/<id> al llegar a un lugar y
+// /proyecto/<id> con la ficha de un proyecto abierta (HU-26). El canvas no se vuelve a montar
 function SincronizarUrl() {
   const fase = useExperiencia((s) => s.fase)
   const zona = useExperiencia((s) => s.zona)
+  const panel = useExperiencia((s) => s.panel)
+  const faseTrasPanel = useExperiencia((s) => s.faseTrasPanel)
   const { pathname } = useLocation()
   const navigate = useNavigate()
 
   useEffect(() => {
-    const ruta = `/lugar/${zona}`
-    if (fase === 'explorando' && pathname !== ruta) navigate(ruta, { replace: true })
-  }, [fase, zona, pathname, navigate])
+    const ruta = rutaDeEstado({ fase, zona, panel, faseTrasPanel })
+    if (ruta && pathname !== ruta) navigate(ruta, { replace: true })
+  }, [fase, zona, panel, faseTrasPanel, pathname, navigate])
 
   return null
 }

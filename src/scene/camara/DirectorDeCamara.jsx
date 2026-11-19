@@ -3,7 +3,9 @@ import { CameraControls } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { LUGARES_POR_ID } from '../../data/lugares.js'
+import { PROYECTOS } from '../../data/proyectos'
 import { useExperiencia } from '../../store/useExperiencia'
+import { centroDelMural, puntoEnLaPared } from '../lugares/galeria'
 
 // Límites del modo panorámico (06 §12)
 const MIN_DISTANCIA = 3
@@ -21,6 +23,8 @@ const FOV_INTRO = 38
 const FOV_NORMAL = 50
 
 const CENTRO_ISLA = new THREE.Vector3(0, 2, -5.5)
+// Vista del mirador (HU-25): toda la isla desde lo alto, dentro de los límites del modo panorámico
+const VISTA_MIRADOR = [CENTRO_ISLA.x + 26, CENTRO_ISLA.y + 32, CENTRO_ISLA.z + 34]
 const ORBITA = { radio: 118, altura: 52, velocidad: 0.07, mirandoA: [0, -16, -5.5] } // la isla queda sobre la tarjeta de título
 const MEDIO_ANCHO_ISLA = 32
 
@@ -70,6 +74,9 @@ export function DirectorDeCamara() {
   const destino = useExperiencia((s) => s.destino)
   const menuViaje = useExperiencia((s) => s.menuViaje)
   const zona = useExperiencia((s) => s.zona)
+  const panel = useExperiencia((s) => s.panel)
+  const vistaMirador = useExperiencia((s) => s.vistaMirador)
+  const enMural = useRef(false) // la cámara se acercó a un mural: al cerrar la ficha vuelve al encuadre de la cueva
 
   // Límites y bloqueo según la fase: en cinemática no hay límites, explorando sí
   useEffect(() => {
@@ -79,6 +86,14 @@ export function DirectorDeCamara() {
     // Dentro de la cueva se orbita alrededor del centro de la galería sin salir de ella: girando
     // se ven los murales del fondo y, hacia la entrada, la cascada cayendo tras la puerta
     const enCueva = explorando && zona === 'cueva'
+    if (enCueva && enMural.current) {
+      // Antes de poner los límites de la galería: el objetivo vuelve a su centro y no se recorta de golpe
+      enMural.current = false
+      const { posicion, objetivo } = LUGARES_POR_ID.cueva.camara
+      const suave = !useExperiencia.getState().ajustes.reducirMovimiento
+      c.setLookAt(...posicion, ...objetivo, suave)
+      c.setFocalOffset(0, 0, 0, suave)
+    }
     c.enabled = explorando && !menuViaje
     c.minDistance = enCueva ? 1 : explorando ? MIN_DISTANCIA : 0
     c.maxDistance = enCueva ? DISTANCIA_CUEVA : explorando ? distanciaMaxima(aspecto) : Infinity
@@ -87,6 +102,41 @@ export function DirectorDeCamara() {
     c.setBoundary(enCueva ? LIMITES_CUEVA : explorando ? LIMITES : null)
   }, [fase, menuViaje, aspecto, zona])
 
+  // Ficha de un proyecto abierta en la cueva (HU-22): la cámara se coloca de frente a su mural, desde
+  // el centro de la galería. Con "Anterior" o "Siguiente" se desplaza al mural del otro proyecto
+  useEffect(() => {
+    const c = controles.current
+    if (!c || fase !== 'panel' || zona !== 'cueva' || panel?.tipo !== 'proyecto' || vuelo.current) return
+    const proyecto = PROYECTOS.find((p) => p.id === panel.id)
+    if (!proyecto) return
+    const { angulo } = proyecto.mural
+    const suave = !useExperiencia.getState().ajustes.reducirMovimiento
+    enMural.current = true
+    // Desde cerca del centro de la galería: el mural destacado (2,8 m) cabe entero junto a la ficha
+    const desde = puntoEnLaPared(angulo, 0.1, 1.8).posicion
+    const mural = centroDelMural(angulo)
+    c.setLookAt(...desde, ...mural, suave)
+    // La ficha ocupa la derecha de la pantalla (440 px): la vista se corre para que el mural quede
+    // centrado en la parte que sigue a la vista. En pantallas estrechas la ficha la cubre entera
+    const ancho = window.innerWidth
+    if (ancho > 640) {
+      const distancia = Math.hypot(desde[0] - mural[0], desde[2] - mural[2])
+      const medioAncho = distancia * Math.tan(THREE.MathUtils.degToRad(camara.fov / 2)) * camara.aspect
+      c.setFocalOffset((Math.min(440, ancho) / ancho) * medioAncho, 0, 0, suave)
+    }
+  }, [fase, zona, panel, camara])
+
+  // Mirador de la cima (HU-25): la cámara se abre a toda la isla. Al arrastrar se vuelve a explorar
+  // y las etiquetas de los lugares desaparecen
+  useEffect(() => {
+    const c = controles.current
+    if (!c || !vistaMirador) return undefined
+    c.setLookAt(...VISTA_MIRADOR, CENTRO_ISLA.x, CENTRO_ISLA.y, CENTRO_ISLA.z, !useExperiencia.getState().ajustes.reducirMovimiento)
+    const terminar = () => useExperiencia.getState().setVistaMirador(false)
+    c.addEventListener('controlstart', terminar)
+    return () => c.removeEventListener('controlstart', terminar)
+  }, [vistaMirador])
+
   // Empieza un vuelo cuando el store pide ir a un destino
   useEffect(() => {
     const c = controles.current
@@ -94,6 +144,8 @@ export function DirectorDeCamara() {
 
     const { posicion, objetivo } = encuadreDe(LUGARES_POR_ID[destino], camara.aspect)
     const { llegar, ajustes } = useExperiencia.getState()
+    c.setFocalOffset(0, 0, 0, false) // por si venía de un mural
+    enMural.current = false
     if (ajustes.reducirMovimiento) {
       c.setLookAt(...posicion, ...objetivo, false)
       hazFov(camara, FOV_NORMAL)

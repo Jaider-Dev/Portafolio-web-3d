@@ -16,6 +16,10 @@ export function puntoEnLaPared(angulo, fraccion, y) {
   return { posicion: [x, y, z], giro: Math.atan2(cx - x, cz - z) }
 }
 
+// Murales (Murales.jsx): altura de su centro y el punto que mira la cámara al abrir uno (HU-22)
+export const ALTURA_MURAL = 1.75
+export const centroDelMural = (angulo) => puntoEnLaPared(angulo, 0.97, ALTURA_MURAL).posicion
+
 export const ANTESALA = { z: [-17.7, -19.7] }
 
 // Ruido suave y determinista para que la roca no sea lisa
@@ -49,3 +53,12 @@ function construirGaleria() {
 // Una sola geometría compartida: la usan la cueva (para dibujarla) y los murales (para pegarse a ella)
 let galeria = null
 export const crearGaleria = () => (galeria ??= construirGaleria())
+
+// Antorchas en la pared de la galería (ángulo en la elipse: 0 = +x, -π/2 = fondo). El fondo queda libre
+// para el mural destacado; las tres marcadas con luz son las que reciben una luz puntual real
+// Una antorcha entre cada par de murales (data/proyectos.js); las dos del fondo flanquean el destacado
+export const ANTORCHAS = [0.97, -0.815, -0.6, -0.4, -0.185, 0.02].map((angulo, indice) => ({
+  ...puntoEnLaPared(angulo, 0.86, 1.55),
+  luz: puntoEnLaPared(angulo, 0.74, 1.9).posicion, // la luz, algo hacia dentro: ilumina los murales vecinos
+  indice,
+}))

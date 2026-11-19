@@ -58,5 +58,8 @@ export const PROYECTOS = [
   },
 ]
 
+// El que se abre con "Ver proyectos" (HU-22): el destacado, o el primero si ninguno lo es
+export const PROYECTO_DESTACADO = PROYECTOS.find((p) => p.destacado) ?? PROYECTOS[0]
+
 // Mural sin terminar: "Próxima expedición" (03 E11), junto a la salida por la derecha
 export const MURAL_PROXIMA = { angulo: 0.12 }

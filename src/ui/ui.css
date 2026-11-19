@@ -141,6 +141,48 @@ html:has(.experiencia), body:has(.experiencia) {
   animation: aparecer var(--velocidad) ease-out;
 }
 
+/* Etiqueta de un objeto interactivo (HT-11): anclada en 3D con <Html>, sin recibir el puntero */
+.etiqueta-3d {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  width: max-content;
+  max-width: 16rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--enfasis-borde);
+  border-radius: 6px;
+  white-space: normal;
+  user-select: none;
+  animation: aparecer var(--velocidad) ease-out;
+}
+.etiqueta-3d span { color: var(--texto-suave); font-size: 0.8125rem; }
+.etiqueta-3d .etiqueta-visitado { color: var(--enfasis); }
+
+/* Etiquetas de los lugares en la vista del mirador (HU-25): botones que llevan a cada lugar */
+.etiqueta-lugar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  padding: 0.375rem 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.etiqueta-lugar span { color: var(--texto-suave); font-size: 0.8125rem; }
+.etiqueta-lugar:hover { background: var(--superficie-hover); border-color: var(--enfasis-borde); }
+.etiqueta-lugar:focus-visible { outline: 2px solid var(--enfasis); outline-offset: 2px; }
+
 /* Panel de rendimiento (solo en desarrollo): al centro para no tapar el HUD */
 .stats-dev { top: 0 !important; left: 50% !important; }
 
@@ -148,7 +190,7 @@ html:has(.experiencia), body:has(.experiencia) {
   from { opacity: 0; transform: translateY(8px); }
 }
 
-[data-reducir] .panel, [data-reducir] .menu-viaje, [data-reducir] .notificacion { animation: none; }
+[data-reducir] .panel, [data-reducir] .menu-viaje, [data-reducir] .notificacion, [data-reducir] .etiqueta-3d { animation: none; }
 
 /* Móvil en vertical: barra inferior al alcance del pulgar y paneles como hoja a pantalla completa */
 @media (max-width: 640px) {

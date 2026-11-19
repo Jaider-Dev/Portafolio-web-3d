@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
-import { Clone, Instance, Instances, useCursor, useGLTF } from '@react-three/drei'
+import { useMemo } from 'react'
+import { Clone, Instance, Instances, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { PANEL_DE_LUGAR, useExperiencia } from '../../store/useExperiencia'
-import { LUGARES } from '../../data/lugares.js'
+import { LUGARES, LUGARES_POR_ID } from '../../data/lugares.js'
+import { TEXTOS } from '../../data/textos'
+import { Interactivo } from '../interaccion/Interactivo'
 import { MUNDO } from '../../data/mundo.js'
 import { PALETA } from '../paleta'
 import { alturaDelTerreno, ESTANQUE, SENDERO_DENSO } from '../isla/terreno.js'
@@ -13,7 +15,7 @@ import { useMaterialPBR } from '../materiales'
 import { useKit } from '../naturaleza/kit.js'
 import { Piedras } from '../naturaleza/Piedras'
 import { Explorador } from '../personaje/Explorador'
-import { CANDIDATOS } from '../personaje/candidatos'
+import { CANDIDATO_ACTIVO, CANDIDATOS } from '../personaje/candidatos'
 
 const RUTAS = {
   tienda: '/models/tienda.glb',
@@ -83,29 +85,28 @@ function Modelo({ ruta, ...props }) {
 // Cada menhir abre la sección de su lugar (17-nov): Sobre mí, habilidades, proyectos, trayectoria, visión
 const PIEZA_MENHIR = ['pena-1', 'roca-8', 'pena-3', 'roca-15', 'pena-6']
 
+// Desde el 19-nov cada menhir es un <Interactivo> (HT-11): viaja a su lugar con su sección abierta
 function Menhir({ lugar, posicion, semilla, pieza }) {
   const geometrias = useKit('rocas')
-  const abrirPanel = useExperiencia((s) => s.abrirPanel)
-  const viajar = useExperiencia((s) => s.viajar)
-  const [encima, setEncima] = useState(false)
-  useCursor(encima)
   const texturaRoca = useMaterialPBR('roca')
-  const activar = (e) => {
-    if (e.delta > 4) return // fue un arrastre de la cámara, no un clic
-    e.stopPropagation()
+  const activar = () => {
+    const { viajar, abrirEn } = useExperiencia.getState()
     if (lugar === 'cueva') viajar('cueva')
-    else abrirPanel({ tipo: lugar === 'campamento' ? 'sobre-mi' : PANEL_DE_LUGAR[lugar] })
+    else abrirEn(lugar, { tipo: lugar === 'campamento' ? 'sobre-mi' : PANEL_DE_LUGAR[lugar] })
   }
   const [x, , z] = posicion
   const y = alturaDelTerreno(x, z)
+  const { nombre, seccion } = LUGARES_POR_ID[lugar]
   return (
-    <group name="menhir">
-      <mesh position={[x, y + 1.05, z]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow
-        onClick={activar} onPointerOver={(e) => { e.stopPropagation(); setEncima(true) }} onPointerOut={() => setEncima(false)}>
-        <primitive object={geometrias[pieza]} attach="geometry" />
-        <meshStandardMaterial {...texturaRoca} color={encima ? PALETA.realce : PALETA.piedra} flatShading roughness={1} />
-      </mesh>
-    </group>
+    <Interactivo id={`menhir-${lugar}`} etiqueta={TEXTOS.interaccion.menhir(nombre, seccion)} pista={TEXTOS.interaccion.pistaMenhir}
+      position={[x, y, z]} altura={2.9} realce={1.04} alActivar={activar}>
+      {({ encima }) => (
+        <mesh position={[0, 1.05, 0]} scale={[0.42, 1.2, 0.3]} rotation={[0.07 * Math.sin(semilla), semilla, 0.08 * Math.cos(semilla)]} castShadow receiveShadow name="menhir">
+          <primitive object={geometrias[pieza]} attach="geometry" />
+          <meshStandardMaterial {...texturaRoca} color={encima ? PALETA.realce : PALETA.piedra} flatShading roughness={1} />
+        </mesh>
+      )}
+    </Interactivo>
   )
 }
 
@@ -143,7 +144,10 @@ export function Campamento() {
   return (
     <group name="campamento">
       <Modelo ruta={RUTAS.tienda} position={MUNDO.tienda} rotation-y={haciaFogata} />
-      <Modelo ruta={RUTAS.fogata} position={MUNDO.fogata} />
+      <Interactivo id="fogata" etiqueta={TEXTOS.interaccion.fogata} pista={TEXTOS.interaccion.pistaFogata} position={MUNDO.fogata}
+        altura={1.4} alActivar={() => useExperiencia.getState().abrirEn('campamento', { tipo: 'sobre-mi' })}>
+        <Modelo ruta={RUTAS.fogata} />
+      </Interactivo>
       <FuegoVivo position={MUNDO.fogata} />
       <BrasasDelModelo />
       {MOSTRAR_EXPLORADOR && <ExploradorEnElCampamento />}
@@ -160,8 +164,9 @@ export function Campamento() {
           )
         })}
       </Instances>
-      <group position={MUNDO.mochila} name="mochila">
-        <mesh position={[0, 0.4, 0]}>
+      <Interactivo id="mochila" etiqueta={TEXTOS.interaccion.mochila} pista={TEXTOS.interaccion.pistaMochila} position={MUNDO.mochila}
+        altura={1.4} alActivar={() => useExperiencia.getState().abrirEn('campamento', { tipo: 'contacto' })}>
+        <mesh position={[0, 0.4, 0]} castShadow>
           <boxGeometry args={[0.6, 0.8, 0.4]} />
           <meshStandardMaterial color={PALETA.madera} flatShading />
         </mesh>
@@ -169,50 +174,25 @@ export function Campamento() {
           <boxGeometry args={[0.42, 0.06, 0.3]} />
           <meshStandardMaterial color={PALETA.agua} flatShading />
         </mesh>
-      </group>
+      </Interactivo>
     </group>
   )
 }
 
-// Los candidatos a explorador, uno al lado del otro mirando a la fogata, para elegir uno (17-nov).
-// El 1 es el preparado el 16-nov (sin color) y el 3, el low poly. El 2 se descartó el 17-nov
+// El explorador espera junto a la fogata, mirándola. Sale solo el candidato activo (19-nov: el 3, el
+// más liviano); el otro sigue en public/models y en candidatos.js, listo para cambiarlo
 const MOSTRAR_EXPLORADOR = true
-const SEPARACION = 1.1
 
 function ExploradorEnElCampamento() {
   const [x, z] = MUNDO.explorador
   const [xFogata, , zFogata] = MUNDO.fogata
   const giro = Math.atan2(xFogata - x, zFogata - z)
-  // Eje perpendicular a la mirada: los candidatos quedan en fila frente a la fogata
-  const lado = [Math.cos(giro), -Math.sin(giro)]
-  return (
-    <group name="candidatos">
-      {[[1, -0.5], [3, 0.5]].map(([id, k]) => {
-        const cx = x + lado[0] * SEPARACION * k
-        const cz = z + lado[1] * SEPARACION * k
-        const { ruta, sinColor, nombre } = CANDIDATOS[id]
-        return (
-          <Explorador key={id} ruta={ruta} sinColor={sinColor} name={nombre}
-            position={[cx, alturaDelTerreno(cx, cz), cz]} rotation-y={giro} />
-        )
-      })}
-    </group>
-  )
+  const { ruta, sinColor, nombre } = CANDIDATOS[CANDIDATO_ACTIVO]
+  return <Explorador ruta={ruta} sinColor={sinColor} name={nombre} position={[x, alturaDelTerreno(x, z), z]} rotation-y={giro} />
 }
 
 export function Puente() {
   return <Modelo ruta={RUTAS.puente} position={MUNDO.puente} name="puente" />
-}
-
-// Vado: losas planas del kit de rocas que asoman del agua
-export function Vado() {
-  const { desde, hasta, y, z, piedras } = MUNDO.vado
-  const losas = useMemo(() => Array.from({ length: piedras }, (_, i) => ({
-    posicion: [desde + (i * (hasta - desde)) / (piedras - 1), y + 0.02, z + 0.12 * Math.sin(i * 2.3)],
-    escala: [0.5 + 0.05 * (i % 2), 0.24, 0.46],
-    rotacion: [0, i * 1.9, 0],
-  })), [desde, hasta, y, z, piedras])
-  return <Piedras nombre="vado" piedras={losas} color={PALETA.piedra} losas sombra={false} />
 }
 
 // Pseudoaleatorio con semilla: las piedras quedan igual en cada visita
@@ -253,7 +233,13 @@ export function Sendero() {
   return <Piedras nombre="sendero" piedras={piedras} color={PALETA.piedra} losas sombra={false} />
 }
 
-// Cima: el mirador es un afloramiento de losas (antes, un cilindro) y el manantial, una roca
+// Pasa piedras de coordenadas del mundo a las de un grupo con origen en `origen` (para <Interactivo>,
+// que escala desde su origen), con la misma semilla que antes: quedan exactamente igual
+const relativas = (piedras, [ox, oy, oz]) => piedras.map((p) => ({ ...p, posicion: [p.posicion[0] - ox, p.posicion[1] - oy, p.posicion[2] - oz] }))
+
+// Cima (HU-25): el mirador es un afloramiento de losas (antes, un cilindro) y el manantial, una roca.
+// Los dos son interactivos (19-nov): el manantial abre la visión y el mirador abre la vista de toda la
+// isla con la etiqueta de cada lugar (EtiquetasDeLugares)
 export function Cima() {
   const [mx, my, mz] = MUNDO.mirador
   const losas = [
@@ -267,10 +253,23 @@ export function Cima() {
     const z = ez - 0.83 * distancia + 0.55 * lado
     return roca([x, alturaDelTerreno(x, z) + radio * 0.35, z], radio, aplastada)
   }
+  const manantial = [detras(1.9, 0, 0.9, 0.8), detras(1.6, 1.1, 0.55, 0.7), detras(1.6, -1.1, 0.5, 0.7)]
+  const origenManantial = manantial[0].posicion
+  const I = TEXTOS.interaccion
   return (
     <group name="cima">
-      <Piedras nombre="mirador" piedras={losas} color={PALETA.piedra} sombra={false} />
-      <Piedras nombre="manantial" piedras={[detras(1.9, 0, 0.9, 0.8), detras(1.6, 1.1, 0.55, 0.7), detras(1.6, -1.1, 0.5, 0.7)]} />
+      <Interactivo id="mirador" etiqueta={I.mirador} pista={I.pistaMirador} position={[mx, my, mz]} altura={1.6} realce={1.03}
+        alActivar={() => {
+          const { setVistaMirador, notificar } = useExperiencia.getState()
+          setVistaMirador(true)
+          notificar({ tipo: 'mirador' })
+        }}>
+        <Piedras nombre="mirador" piedras={relativas(losas, [mx, my, mz])} color={PALETA.piedra} sombra={false} />
+      </Interactivo>
+      <Interactivo id="manantial" etiqueta={I.manantial} pista={I.pistaManantial} position={origenManantial} altura={1.5} realce={1.05}
+        alActivar={() => useExperiencia.getState().abrirEn('cima', { tipo: 'vision' })}>
+        <Piedras nombre="manantial" piedras={relativas(manantial, origenManantial)} />
+      </Interactivo>
     </group>
   )
 }
